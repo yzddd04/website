@@ -7,6 +7,15 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from datetime import datetime, timedelta
 import re
+import os, subprocess, sys
+
+# CATATAN:
+# Jika muncul pesan seperti:
+#   DevTools listening on ws://...
+#   WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+#   I0000 ... voice_transcription.cc:58 ...
+# Itu BUKAN error, melainkan pesan standar dari Chrome/Chromium saat mode headless.
+# Pesan tersebut bisa diabaikan dan tidak mempengaruhi jalannya bot.
 
 # --- FUNGSI BANTU UNTUK TIKTOK ---
 def get_tiktok_odometer_value(odometer_element):
@@ -111,11 +120,22 @@ if not users_to_monitor:
 # --- SETUP BROWSER ---
 print("\nMenyiapkan browser...")
 options = webdriver.ChromeOptions()
+options.add_argument("--headless=new")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-notifications")
 options.add_argument('--log-level=3')
-options.add_experimental_option('excludeSwitches', ['enable-logging'])
+options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
+options.add_experimental_option('useAutomationExtension', False)
+# User-Agent Chrome normal
+options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36')
+# Anti-detect
+options.add_argument('--disable-blink-features=AutomationControlled')
+
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+# Patch navigator.webdriver agar undefined (anti headless detect)
+driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
+    'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
+})
 
 # --- BUKA TABS ---
 print("Membuka tab untuk setiap user...")
@@ -181,6 +201,16 @@ finally:
     try:
         if 'driver' in locals() and driver:
             driver.quit()
+            print("driver.quit() sudah dipanggil.")
     except Exception as e:
         print(f"Gagal menutup browser dengan benar: {e}")
+    
+    # Paksa kill proses Chrome/Chromedriver jika masih ada (khusus Linux/Ubuntu)
+    if sys.platform.startswith('linux'):
+        try:
+            subprocess.call('pkill -f chrome', shell=True)
+            subprocess.call('pkill -f chromedriver', shell=True)
+            print("Proses Chrome dan Chromedriver dipaksa berhenti (Linux/Ubuntu).")
+        except Exception as e:
+            print(f"Gagal memaksa kill proses: {e}")
     print("Bot selesai.")

@@ -56,6 +56,7 @@ if not usernames:
 
 print("\nMenyiapkan browser...")
 options = webdriver.ChromeOptions()
+options.add_argument("--headless=new")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-notifications")
 options.add_argument("--disable-gpu")
@@ -97,7 +98,7 @@ try:
 
         # --- Loop melalui setiap tab ---
         for i, handle in enumerate(driver.window_handles):
-            driver.switch_to.window(handle)
+            driver.switch_to.window(handle) 
             username_for_tab = usernames[i]
             
             try:
