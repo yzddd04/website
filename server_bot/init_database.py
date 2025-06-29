@@ -1,10 +1,15 @@
 from pymongo import MongoClient
 from datetime import datetime
+import certifi
 
 def init_database():
     """Inisialisasi database dengan contoh data jika kosong."""
     try:
-        client = MongoClient('mongodb://localhost:27017/')
+        # Gunakan MongoDB Atlas
+        client = MongoClient(
+            'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
+            tlsCAFile=certifi.where()
+        )
         db = client['botwebsite']
         print("=== INISIALISASI DATABASE ===")
         member_count = db['members'].count_documents({})
@@ -44,20 +49,36 @@ def init_database():
             db['members'].insert_many(sample_members)
             print("✓ Contoh data berhasil ditambahkan!")
             print("\nUsername Instagram contoh:")
-            for m in sample_members:
-                if m['socialLinks']['instagram']:
-                    print(f"  - {m['socialLinks']['instagram']}")
+            print("  - instagram")
+            print("  - meta")
             print("\nUsername TikTok contoh:")
-            for m in sample_members:
-                if m['socialLinks']['tiktok']:
-                    print(f"  - {m['socialLinks']['tiktok']}")
-            print("\nAnda bisa menghapus atau mengganti username ini dengan username yang sebenarnya.")
+            print("  - tiktok")
+            print("  - bytedance")
         else:
-            print("\nDatabase sudah memiliki data.")
-            print("Gunakan menu 'Manajemen Username' untuk mengelola data.")
+            print("✓ Database sudah berisi data.")
+        
+        # Inisialisasi database stats
+        print("\n=== INISIALISASI DATABASE STATS ===")
+        stats_db = client['bot_stats']
+        
+        # Cek collections stats
+        instagram_count = stats_db['instagram_stats'].count_documents({})
+        tiktok_count = stats_db['tiktok_stats'].count_documents({})
+        
+        print(f"Data Instagram stats: {instagram_count}")
+        print(f"Data TikTok stats: {tiktok_count}")
+        
+        # Buat index untuk optimasi
+        stats_db['instagram_stats'].create_index([("username", 1), ("timestamp", -1)])
+        stats_db['tiktok_stats'].create_index([("username", 1), ("timestamp", -1)])
+        print("✓ Index database stats berhasil dibuat.")
+        
         client.close()
+        print("\n✓ Inisialisasi database selesai!")
+        
     except Exception as e:
         print(f"Error: {e}")
+        print("Pastikan koneksi internet stabil dan MongoDB Atlas dapat diakses.")
 
 def clear_database():
     """Membersihkan semua data dari database."""

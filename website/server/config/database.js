@@ -22,9 +22,9 @@ const createConnection = (uri, dbName) => {
   }
 };
 
-// Definisikan URI
-const mainDbUri = process.env.MONGO_URI || 'mongodb://localhost:27017/botwebsite';
-const statsDbUri = 'mongodb://localhost:27017/bot_stats';
+// Definisikan URI untuk MongoDB Atlas
+const mainDbUri = process.env.MONGO_URI || 'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server';
+const statsDbUri = 'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server';
 
 // Buat dan ekspor koneksi
 const mainConnection = createConnection(mainDbUri, 'botwebsite');

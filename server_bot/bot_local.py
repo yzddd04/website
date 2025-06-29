@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import re
 import os, subprocess, sys
 from pymongo import MongoClient
+import certifi
 
 # CATATAN:
 # Jika muncul pesan seperti:
@@ -101,7 +102,11 @@ def handle_tiktok_cookie_popup(driver):
 def get_users_from_database():
     """Mengambil daftar username dari database botwebsite.members."""
     try:
-        client = MongoClient('mongodb://localhost:27017/')
+        # Gunakan MongoDB Atlas
+        client = MongoClient(
+            'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
+            tlsCAFile=certifi.where()
+        )
         db = client['botwebsite']
         users_to_monitor = []
         members = db['members'].find({})
@@ -131,7 +136,7 @@ users_to_monitor = get_users_from_database()
 
 if not users_to_monitor:
     print("Tidak ada username yang ditemukan di database.")
-    print("Pastikan database MongoDB berjalan dan memiliki data username.")
+    print("Pastikan database MongoDB Atlas dapat diakses dan memiliki data username.")
     print("Bot tidak akan dijalankan.")
     exit()
 
@@ -180,7 +185,10 @@ for i, user in enumerate(users_to_monitor):
         handle_tiktok_cookie_popup(driver)
 
 # --- SETUP MONGODB ---
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient(
+    'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
+    tlsCAFile=certifi.where()
+)
 db = client['bot_stats']
 col_instagram = db['instagram_stats']
 col_tiktok = db['tiktok_stats']
@@ -249,6 +257,14 @@ finally:
             print("driver.quit() sudah dipanggil.")
     except Exception as e:
         print(f"Gagal menutup browser dengan benar: {e}")
+    
+    # Menutup koneksi database
+    try:
+        if 'client' in locals() and client:
+            client.close()
+            print("Koneksi MongoDB ditutup.")
+    except Exception as e:
+        print(f"Gagal menutup koneksi MongoDB dengan benar: {e}")
     
     # Paksa kill proses Chrome/Chromedriver jika masih ada (khusus Windows)
     if sys.platform.startswith('win'):

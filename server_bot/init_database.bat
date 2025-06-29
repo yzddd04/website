@@ -9,16 +9,16 @@ echo.
 
 cd /d "%~dp0"
 
-echo Memeriksa koneksi database...
-python -c "from pymongo import MongoClient; client = MongoClient('mongodb://localhost:27017/'); client.admin.command('ping'); print('Database OK!')" 2>nul
+echo Memeriksa koneksi database MongoDB Atlas...
+python -c "from pymongo import MongoClient; import certifi; client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where()); client.admin.command('ping'); print('Database MongoDB Atlas OK!')" 2>nul
 if errorlevel 1 (
-    echo Error: Tidak dapat terhubung ke database MongoDB!
-    echo Pastikan MongoDB berjalan di localhost:27017
+    echo Error: Tidak dapat terhubung ke database MongoDB Atlas!
+    echo Pastikan koneksi internet stabil dan MongoDB Atlas dapat diakses
     pause
     exit /b 1
 )
 
-echo Database terhubung!
+echo Database MongoDB Atlas terhubung!
 echo.
 
 python init_database.py

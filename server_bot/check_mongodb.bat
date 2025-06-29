@@ -3,33 +3,29 @@ title Check MongoDB Status
 color 0E
 
 echo ========================================
-echo    CHECK MONGODB STATUS
+echo    CHECK MONGODB ATLAS STATUS
 echo ========================================
 echo.
 
 cd /d "%~dp0"
 
-echo Mengecek status MongoDB...
+echo Mengecek status MongoDB Atlas...
 echo.
 
-python -c "from pymongo import MongoClient; client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=5000); client.admin.command('ping'); print('✓ MongoDB berjalan di localhost:27017')" 2>nul
+python -c "from pymongo import MongoClient; import certifi; client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where(), serverSelectionTimeoutMS=10000); client.admin.command('ping'); print('✓ MongoDB Atlas terhubung')" 2>nul
 if errorlevel 1 (
-    echo ✗ MongoDB tidak berjalan atau tidak dapat diakses
+    echo ✗ MongoDB Atlas tidak dapat diakses
     echo.
     echo Solusi:
-    echo 1. Pastikan MongoDB sudah terinstall
-    echo 2. Jalankan MongoDB service
-    echo 3. Cek apakah port 27017 tidak diblokir
+    echo 1. Pastikan koneksi internet stabil
+    echo 2. Cek apakah MongoDB Atlas dapat diakses
+    echo 3. Cek apakah credentials benar
     echo.
-    echo Untuk Windows:
-    echo - Buka Services (services.msc)
-    echo - Cari "MongoDB" dan start service
-    echo.
-    echo Atau jalankan MongoDB secara manual:
-    echo mongod --dbpath C:\data\db
+    echo Untuk mengecek koneksi internet:
+    echo ping google.com
 ) else (
     echo.
-    echo MongoDB siap digunakan!
+    echo MongoDB Atlas siap digunakan!
 )
 
 echo.
