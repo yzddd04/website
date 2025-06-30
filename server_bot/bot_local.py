@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 import re
 import os, subprocess, sys
 from pymongo import MongoClient
-import certifi
 
 # CATATAN:
 # Jika muncul pesan seperti:
@@ -102,11 +101,7 @@ def handle_tiktok_cookie_popup(driver):
 def get_users_from_database():
     """Mengambil daftar username dari database botwebsite.members."""
     try:
-        # Gunakan MongoDB Atlas
-        client = MongoClient(
-            'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
-            tlsCAFile=certifi.where()
-        )
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
         db = client['botwebsite']
         users_to_monitor = []
         members = db['members'].find({})
@@ -136,7 +131,7 @@ users_to_monitor = get_users_from_database()
 
 if not users_to_monitor:
     print("Tidak ada username yang ditemukan di database.")
-    print("Pastikan database MongoDB Atlas dapat diakses dan memiliki data username.")
+    print("Pastikan database MongoDB berjalan dan memiliki data username.")
     print("Bot tidak akan dijalankan.")
     exit()
 
@@ -151,6 +146,9 @@ options.add_argument("--headless=new")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-notifications")
 options.add_argument('--log-level=3')
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
 options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
 options.add_experimental_option('useAutomationExtension', False)
 # User-Agent Chrome normal
@@ -158,7 +156,39 @@ options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 # Anti-detect
 options.add_argument('--disable-blink-features=AutomationControlled')
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+# Try multiple methods to setup ChromeDriver
+driver = None
+setup_methods = [
+    {
+        'name': 'webdriver-manager',
+        'setup': lambda: webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    },
+    {
+        'name': 'local chromedriver.exe',
+        'setup': lambda: webdriver.Chrome(service=Service("chromedriver.exe"), options=options) if os.path.exists("chromedriver.exe") else None
+    },
+    {
+        'name': 'system PATH',
+        'setup': lambda: webdriver.Chrome(options=options)
+    }
+]
+
+for method in setup_methods:
+    try:
+        print(f"Trying {method['name']}...")
+        driver = method['setup']()
+        if driver:
+            print(f"✓ Browser setup successful using {method['name']}")
+            break
+    except Exception as e:
+        print(f"✗ {method['name']} failed: {type(e).__name__}")
+        continue
+
+if not driver:
+    print("❌ All ChromeDriver setup methods failed!")
+    print("Please run: fix_chromedriver.bat")
+    exit(1)
+
 # Patch navigator.webdriver agar undefined (anti headless detect)
 driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
     'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
@@ -185,10 +215,7 @@ for i, user in enumerate(users_to_monitor):
         handle_tiktok_cookie_popup(driver)
 
 # --- SETUP MONGODB ---
-client = MongoClient(
-    'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
-    tlsCAFile=certifi.where()
-)
+client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
 db = client['bot_stats']
 col_instagram = db['instagram_stats']
 col_tiktok = db['tiktok_stats']
@@ -257,14 +284,6 @@ finally:
             print("driver.quit() sudah dipanggil.")
     except Exception as e:
         print(f"Gagal menutup browser dengan benar: {e}")
-    
-    # Menutup koneksi database
-    try:
-        if 'client' in locals() and client:
-            client.close()
-            print("Koneksi MongoDB ditutup.")
-    except Exception as e:
-        print(f"Gagal menutup koneksi MongoDB dengan benar: {e}")
     
     # Paksa kill proses Chrome/Chromedriver jika masih ada (khusus Windows)
     if sys.platform.startswith('win'):

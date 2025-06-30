@@ -22,7 +22,7 @@ const createConnection = (uri, dbName) => {
   }
 };
 
-// Definisikan URI untuk MongoDB Atlas
+// Definisikan URI untuk MongoDB Cloud
 const mainDbUri = process.env.MONGO_URI || 'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server';
 const statsDbUri = 'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server';
 

@@ -1,15 +1,10 @@
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-import certifi
 
 def check_database_status():
     """Mengecek status database dan menampilkan informasi."""
     try:
-        # Gunakan MongoDB Atlas
-        client = MongoClient(
-            'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server',
-            tlsCAFile=certifi.where()
-        )
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
         db = client['bot_stats']
         
         print("=== STATUS DATABASE ===")
@@ -73,11 +68,9 @@ def check_database_status():
         print(f"  - TikTok: {today_tiktok} records")
         
         client.close()
-        print("\n✓ Pengecekan database selesai!")
         
     except Exception as e:
         print(f"Error: {e}")
-        print("Pastikan koneksi internet stabil dan MongoDB Atlas dapat diakses.")
 
 if __name__ == "__main__":
     check_database_status() 
