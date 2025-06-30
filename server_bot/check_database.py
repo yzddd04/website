@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 def check_database_status():
     """Mengecek status database dan menampilkan informasi."""
     try:
-        client = MongoClient('mongodb://localhost:27017/')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
         db = client['bot_stats']
         
         print("=== STATUS DATABASE ===")

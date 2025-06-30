@@ -1,3 +1,12 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Hide TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = ''   # Hide CUDA warnings if any
+import warnings
+warnings.filterwarnings("ignore")
+import logging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -101,7 +110,7 @@ def handle_tiktok_cookie_popup(driver):
 def get_users_from_database():
     """Mengambil daftar username dari database botwebsite.members."""
     try:
-        client = MongoClient('mongodb://localhost:27017/')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
         db = client['botwebsite']
         users_to_monitor = []
         members = db['members'].find({})
@@ -146,6 +155,9 @@ options.add_argument("--headless=new")
 options.add_argument("--start-maximized")
 options.add_argument("--disable-notifications")
 options.add_argument('--log-level=3')
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
 options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
 options.add_experimental_option('useAutomationExtension', False)
 # User-Agent Chrome normal
@@ -153,7 +165,39 @@ options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) Apple
 # Anti-detect
 options.add_argument('--disable-blink-features=AutomationControlled')
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+# Try multiple methods to setup ChromeDriver
+driver = None
+setup_methods = [
+    {
+        'name': 'webdriver-manager',
+        'setup': lambda: webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+    },
+    {
+        'name': 'local chromedriver.exe',
+        'setup': lambda: webdriver.Chrome(service=Service("chromedriver.exe"), options=options) if os.path.exists("chromedriver.exe") else None
+    },
+    {
+        'name': 'system PATH',
+        'setup': lambda: webdriver.Chrome(options=options)
+    }
+]
+
+for method in setup_methods:
+    try:
+        print(f"Trying {method['name']}...")
+        driver = method['setup']()
+        if driver:
+            print(f"✓ Browser setup successful using {method['name']}")
+            break
+    except Exception as e:
+        print(f"✗ {method['name']} failed: {type(e).__name__}")
+        continue
+
+if not driver:
+    print("❌ All ChromeDriver setup methods failed!")
+    print("Please run: fix_chromedriver.bat")
+    exit(1)
+
 # Patch navigator.webdriver agar undefined (anti headless detect)
 driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
     'source': 'Object.defineProperty(navigator, "webdriver", {get: () => undefined})'
@@ -180,7 +224,7 @@ for i, user in enumerate(users_to_monitor):
         handle_tiktok_cookie_popup(driver)
 
 # --- SETUP MONGODB ---
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
 db = client['bot_stats']
 col_instagram = db['instagram_stats']
 col_tiktok = db['tiktok_stats']
@@ -200,6 +244,10 @@ try:
         wait_seconds = (60 - now.second % 60)
         time.sleep(wait_seconds)
         
+        # Clear terminal before printing new data
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(header)
+        print("-" * len(header))
         print(f"--- Siklus {datetime.now().strftime('%H:%M:%S')} ---")
 
         for i, handle in enumerate(driver.window_handles):
@@ -236,7 +284,7 @@ try:
 
             except Exception as e:
                 print(f"  [{username_for_tab.ljust(15)}] Gagal mengambil data: {type(e).__name__}")
-        
+
 except KeyboardInterrupt:
     print("\nBot dihentikan oleh pengguna.")
 except Exception as e:

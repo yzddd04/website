@@ -21,7 +21,7 @@ const memberRoutes = require('./routes/members');
 
 const app = express();
 let PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/botwebsite';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server';
 
 // Middleware
 if (process.env.NODE_ENV === 'development') {

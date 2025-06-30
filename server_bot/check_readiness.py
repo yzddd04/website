@@ -41,21 +41,21 @@ def check_mongodb():
     """Mengecek koneksi MongoDB."""
     print("\n=== CEK MONGODB ===")
     try:
-        client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=5000)
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', serverSelectionTimeoutMS=5000)
         client.admin.command('ping')
-        print("OK MongoDB berjalan di localhost:27017")
+        print("OK MongoDB Cloud terhubung")
         client.close()
         return True
     except Exception as e:
         print(f"X MongoDB tidak dapat diakses: {e}")
-        print("Pastikan MongoDB berjalan di localhost:27017")
+        print("Pastikan koneksi internet stabil dan MongoDB Cloud dapat diakses")
         return False
 
 def check_database_data():
     """Mengecek data username di database botwebsite.members."""
     print("\n=== CEK DATA DATABASE ===")
     try:
-        client = MongoClient('mongodb://localhost:27017/')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
         db = client['botwebsite']
         members = db['members'].find({})
         ig_count = 0

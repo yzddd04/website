@@ -9,27 +9,27 @@ echo.
 
 cd /d "%~dp0"
 
-echo Mengecek status MongoDB...
+echo Mengecek status MongoDB Cloud...
 echo.
 
-python -c "from pymongo import MongoClient; client = MongoClient('mongodb://localhost:27017/', serverSelectionTimeoutMS=5000); client.admin.command('ping'); print('✓ MongoDB berjalan di localhost:27017')" 2>nul
+python test_connection.py
 if errorlevel 1 (
-    echo ✗ MongoDB tidak berjalan atau tidak dapat diakses
+    echo.
+    echo ✗ MongoDB Cloud tidak dapat diakses
     echo.
     echo Solusi:
-    echo 1. Pastikan MongoDB sudah terinstall
-    echo 2. Jalankan MongoDB service
-    echo 3. Cek apakah port 27017 tidak diblokir
+    echo 1. Pastikan koneksi internet stabil
+    echo 2. Cek apakah MongoDB Cloud service aktif
+    echo 3. Verifikasi connection string
+    echo 4. Cek firewall atau proxy settings
     echo.
-    echo Untuk Windows:
-    echo - Buka Services (services.msc)
-    echo - Cari "MongoDB" dan start service
-    echo.
-    echo Atau jalankan MongoDB secara manual:
-    echo mongod --dbpath C:\data\db
+    echo Untuk troubleshooting:
+    echo - Coba akses MongoDB Atlas dashboard
+    echo - Periksa network connectivity
+    echo - Pastikan IP address diizinkan di MongoDB Atlas
 ) else (
     echo.
-    echo MongoDB siap digunakan!
+    echo MongoDB Cloud siap digunakan!
 )
 
 echo.
