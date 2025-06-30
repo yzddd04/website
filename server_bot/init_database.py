@@ -1,10 +1,11 @@
 from pymongo import MongoClient
 from datetime import datetime
+import certifi
 
 def init_database():
     """Inisialisasi database dengan contoh data jika kosong."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['botwebsite']
         print("=== INISIALISASI DATABASE ===")
         member_count = db['members'].count_documents({})

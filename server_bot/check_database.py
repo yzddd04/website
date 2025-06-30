@@ -1,10 +1,11 @@
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+import certifi
 
 def check_database_status():
     """Mengecek status database dan menampilkan informasi."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['bot_stats']
         
         print("=== STATUS DATABASE ===")

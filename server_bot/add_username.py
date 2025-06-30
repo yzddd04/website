@@ -1,10 +1,11 @@
 from pymongo import MongoClient
 from datetime import datetime
+import certifi
 
 def add_username_to_database():
     """Menambahkan username ke database botwebsite.members."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['botwebsite']
         print("=== TAMBAH USERNAME KE DATABASE ===")
         print("1. Instagram")
@@ -48,7 +49,7 @@ def add_username_to_database():
 def list_usernames():
     """Menampilkan daftar username di database botwebsite.members."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['botwebsite']
         print("\n=== DAFTAR USERNAME DI DATABASE ===")
         members = db['members'].find({})
@@ -80,7 +81,7 @@ def list_usernames():
 def remove_username():
     """Menghapus username dari database botwebsite.members."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['botwebsite']
         print("\n=== HAPUS USERNAME DARI DATABASE ===")
         print("1. Instagram")

@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 import re
 import os, subprocess, sys
 from pymongo import MongoClient
+import certifi
 
 # CATATAN:
 # Jika muncul pesan seperti:
@@ -110,7 +111,7 @@ def handle_tiktok_cookie_popup(driver):
 def get_users_from_database():
     """Mengambil daftar username dari database botwebsite.members."""
     try:
-        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/botwebsite?retryWrites=true&w=majority&appName=server')
+        client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
         db = client['botwebsite']
         users_to_monitor = []
         members = db['members'].find({})
@@ -224,7 +225,7 @@ for i, user in enumerate(users_to_monitor):
         handle_tiktok_cookie_popup(driver)
 
 # --- SETUP MONGODB ---
-client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_stats?retryWrites=true&w=majority&appName=server')
+client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=certifi.where())
 db = client['bot_stats']
 col_instagram = db['instagram_stats']
 col_tiktok = db['tiktok_stats']
