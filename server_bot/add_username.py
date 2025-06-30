@@ -15,26 +15,34 @@ def add_username_to_database():
         if choice == "1":
             username = input("Masukkan username Instagram: ").strip()
             if username:
-                db['members'].insert_one({
+                doc = {
                     'name': username,
                     'username': username,
                     'socialLinks': {'instagram': username, 'tiktok': ''},
                     'joinDate': datetime.now(),
                     'status': 'active'
-                })
+                }
+                # Hapus field email jika tidak ada
+                if 'email' in doc and (doc['email'] is None or doc['email'] == ''):
+                    del doc['email']
+                db['members'].insert_one(doc)
                 print(f"Username Instagram '{username}' berhasil ditambahkan!")
             else:
                 print("Username tidak boleh kosong!")
         elif choice == "2":
             username = input("Masukkan username TikTok: ").strip()
             if username:
-                db['members'].insert_one({
+                doc = {
                     'name': username,
                     'username': username,
                     'socialLinks': {'instagram': '', 'tiktok': username},
                     'joinDate': datetime.now(),
                     'status': 'active'
-                })
+                }
+                # Hapus field email jika tidak ada
+                if 'email' in doc and (doc['email'] is None or doc['email'] == ''):
+                    del doc['email']
+                db['members'].insert_one(doc)
                 print(f"Username TikTok '{username}' berhasil ditambahkan!")
             else:
                 print("Username tidak boleh kosong!")

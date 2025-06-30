@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5001/api/data';
+const API_URL = 'http://localhost:5000/api/data';
 
 // Coba port 5000 jika 5001 gagal
 async function fetchWithFallback(url: string, options?: RequestInit): Promise<Response> {
@@ -59,7 +59,7 @@ export async function addData(name: string, value: string): Promise<Data> {
  */
 export async function registerUser(email: string, name: string, department: string, password: string): Promise<{message: string}> {
   try {
-    const res = await fetchWithFallback('http://localhost:5001/api/auth/register', {
+    const res = await fetchWithFallback('http://localhost:5000/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, name, department, password })
@@ -108,7 +108,7 @@ export interface User {
  */
 export async function loginUser(email: string, password: string): Promise<{user: User, message: string}> {
   try {
-    const res = await fetchWithFallback('http://localhost:5001/api/auth/login', {
+    const res = await fetchWithFallback('http://localhost:5000/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -148,11 +148,11 @@ export interface Member {
 
 // Members
 export async function getMembers(): Promise<Member[]> {
-  const res = await fetchWithFallback('http://localhost:5001/api/members');
+  const res = await fetchWithFallback('http://localhost:5000/api/members');
   return res.json();
 }
 export async function addMember(member: Member): Promise<Member> {
-  const res = await fetchWithFallback('http://localhost:5001/api/members', {
+  const res = await fetchWithFallback('http://localhost:5000/api/members', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(member)
@@ -176,11 +176,11 @@ export interface News {
 
 // News
 export async function getNews(): Promise<News[]> {
-  const res = await fetchWithFallback('http://localhost:5001/api/news');
+  const res = await fetchWithFallback('http://localhost:5000/api/news');
   return res.json();
 }
 export async function addNews(news: News): Promise<News> {
-  const res = await fetchWithFallback('http://localhost:5001/api/news', {
+  const res = await fetchWithFallback('http://localhost:5000/api/news', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(news)
@@ -201,11 +201,11 @@ export interface Article {
 
 // Articles
 export async function getArticles(): Promise<Article[]> {
-  const res = await fetchWithFallback('http://localhost:5001/api/articles');
+  const res = await fetchWithFallback('http://localhost:5000/api/articles');
   return res.json();
 }
 export async function addArticle(article: Article): Promise<Article> {
-  const res = await fetchWithFallback('http://localhost:5001/api/articles', {
+  const res = await fetchWithFallback('http://localhost:5000/api/articles', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(article)
@@ -225,7 +225,7 @@ export interface Stats {
  * @returns {Promise<Stats>}
  */
 export async function getStats(): Promise<Stats> {
-  const res = await fetchWithFallback('http://localhost:5001/api/members/stats');
+  const res = await fetchWithFallback('http://localhost:5000/api/members/stats');
   return res.json();
 }
 
@@ -251,7 +251,7 @@ export async function getMemberStats(username: string): Promise<MemberStats> {
   if (!username) {
     return { tiktok: null, instagram: null };
   }
-  const res = await fetchWithFallback(`http://localhost:5001/api/members/${username}/stats`);
+  const res = await fetchWithFallback(`http://localhost:5000/api/members/${username}/stats`);
   if (!res.ok) {
     // throw new Error('Failed to fetch member stats');
     console.error('Failed to fetch member stats');
@@ -261,7 +261,7 @@ export async function getMemberStats(username: string): Promise<MemberStats> {
 }
 
 export async function updateUserProfile(userId: string, profileData: Partial<Member>): Promise<{user: Member}> {
-  const res = await fetchWithFallback(`http://localhost:5001/api/users/profile/${userId}`, {
+  const res = await fetchWithFallback(`http://localhost:5000/api/users/profile/${userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(profileData),
@@ -276,7 +276,7 @@ export async function updateUserProfile(userId: string, profileData: Partial<Mem
 }
 
 export async function getMemberStatsHistory(username: string) {
-  const res = await fetchWithFallback(`http://localhost:5001/api/members/${username}/stats/history`);
+  const res = await fetchWithFallback(`http://localhost:5000/api/members/${username}/stats/history`);
   if (!res.ok) throw new Error('Failed to fetch stats history');
   return res.json();
 } 

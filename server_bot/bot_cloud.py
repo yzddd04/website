@@ -106,37 +106,27 @@ def handle_tiktok_cookie_popup(driver):
         # Jika tidak ditemukan setelah 5 detik, lanjutkan saja.
         pass
 
-# --- PENGATURAN AWAL ---
+# --- AMBIL USERNAME DARI DATABASE ---
 users_to_monitor = []
-
-# 1. Minta username Instagram
 try:
-    num_ig_users = int(input("Masukkan jumlah username Instagram yang ingin dipantau (0 jika tidak ada): "))
-except ValueError:
-    num_ig_users = 0
-
-if num_ig_users > 0:
-    print("--- Masukkan Username Instagram ---")
-    for i in range(num_ig_users):
-        username = input(f"  - Username Instagram ke-{i+1}: ")
-        if username:
-            users_to_monitor.append({'username': username, 'platform': 'instagram'})
-
-# 2. Minta username TikTok
-try:
-    num_tiktok_users = int(input("\nMasukkan jumlah username TikTok yang ingin dipantau (0 jika tidak ada): "))
-except ValueError:
-    num_tiktok_users = 0
-
-if num_tiktok_users > 0:
-    print("--- Masukkan Username TikTok ---")
-    for i in range(num_tiktok_users):
-        username = input(f"  - Username TikTok ke-{i+1}: ")
-        if username:
-            users_to_monitor.append({'username': username, 'platform': 'tiktok'})
+    ca = certifi.where()
+    client = MongoClient('mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/?retryWrites=true&w=majority&appName=server', tlsCAFile=ca)
+    db = client['botwebsite']
+    members = db['members'].find({})
+    for m in members:
+        ig = m.get('socialLinks', {}).get('instagram', '').strip()
+        if ig:
+            users_to_monitor.append({'username': ig, 'platform': 'instagram'})
+        tk = m.get('socialLinks', {}).get('tiktok', '').strip()
+        if tk:
+            users_to_monitor.append({'username': tk, 'platform': 'tiktok'})
+    client.close()
+except Exception as e:
+    print(f"Gagal mengambil username dari database: {e}")
+    exit()
 
 if not users_to_monitor:
-    print("Tidak ada username yang dimasukkan. Keluar.")
+    print("Tidak ada username yang ditemukan di database. Keluar.")
     exit()
 
 # --- SETUP DATABASE ---
