@@ -1,3 +1,12 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Hide TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = ''   # Hide CUDA warnings if any
+import warnings
+warnings.filterwarnings("ignore")
+import logging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager

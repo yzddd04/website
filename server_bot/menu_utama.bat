@@ -10,48 +10,55 @@ echo    Menu Utama
 echo ========================================
 echo.
 echo 1. 📦 INSTALL ALL DEPENDENCIES
-echo 2. Setup MongoDB
-echo 3. Cek Status MongoDB
-echo 4. Cek Status Database
-echo 5. Inisialisasi Database
-echo 6. Manajemen Username
-echo 7. Sistem Readiness Check
-echo 8. 🔧 PERBAIKI KONEKSI MONGODB (OTOMATIS)
-echo 9. ⚡ QUICK FIX MONGODB
-echo 10. 🚗 PERBAIKI CHROMEDRIVER
-echo 11. 🎯 AUTO FIX SEMUA MASALAH
-echo 12. Jalankan Bot (Foreground)
-echo 13. Jalankan Bot (Background/Service)
-echo 14. Cek Status Bot
-echo 15. Hentikan Bot Service
-echo 16. Lihat Log Bot Service
-echo 17. Keluar
+echo 2. 🔧 FIX MISSING IMPORTS
+echo 3. Setup MongoDB
+echo 4. Cek Status MongoDB
+echo 5. Cek Status Database
+echo 6. Inisialisasi Database
+echo 7. Manajemen Username
+echo 8. Sistem Readiness Check
+echo 9. 🔧 PERBAIKI KONEKSI MONGODB (OTOMATIS)
+echo 10. ⚡ QUICK FIX MONGODB
+echo 11. 🚗 PERBAIKI CHROMEDRIVER
+echo 12. 🎯 AUTO FIX SEMUA MASALAH
+echo 13. Jalankan Bot (Foreground)
+echo 14. Jalankan Bot (Background/Service)
+echo 15. Cek Status Bot
+echo 16. Hentikan Bot Service
+echo 17. Lihat Log Bot Service
+echo 18. Keluar
 echo.
 echo ========================================
-set /p choice="Pilih menu (1-17): "
+set /p choice="Pilih menu (1-18): "
 
 if "%choice%"=="1" goto install
-if "%choice%"=="2" goto setup_mongo
-if "%choice%"=="3" goto check_mongo
-if "%choice%"=="4" goto check_db
-if "%choice%"=="5" goto init_db
-if "%choice%"=="6" goto manage_users
-if "%choice%"=="7" goto readiness
-if "%choice%"=="8" goto fix_mongodb
-if "%choice%"=="9" goto quick_fix
-if "%choice%"=="10" goto fix_chromedriver
-if "%choice%"=="11" goto auto_fix_all
-if "%choice%"=="12" goto run_bot
-if "%choice%"=="13" goto run_service
-if "%choice%"=="14" goto check_bot
-if "%choice%"=="15" goto stop_service
-if "%choice%"=="16" goto view_log
-if "%choice%"=="17" goto exit
+if "%choice%"=="2" goto fix_imports
+if "%choice%"=="3" goto setup_mongo
+if "%choice%"=="4" goto check_mongo
+if "%choice%"=="5" goto check_db
+if "%choice%"=="6" goto init_db
+if "%choice%"=="7" goto manage_users
+if "%choice%"=="8" goto readiness
+if "%choice%"=="9" goto fix_mongodb
+if "%choice%"=="10" goto quick_fix
+if "%choice%"=="11" goto fix_chromedriver
+if "%choice%"=="12" goto auto_fix_all
+if "%choice%"=="13" goto run_bot
+if "%choice%"=="14" goto run_service
+if "%choice%"=="15" goto check_bot
+if "%choice%"=="16" goto stop_service
+if "%choice%"=="17" goto view_log
+if "%choice%"=="18" goto exit
 goto menu
 
 :install
 cls
 call install_deps.bat
+goto menu
+
+:fix_imports
+cls
+call fix_imports.bat
 goto menu
 
 :setup_mongo

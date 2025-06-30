@@ -1,3 +1,12 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Hide TensorFlow warnings
+os.environ['CUDA_VISIBLE_DEVICES'] = ''   # Hide CUDA warnings if any
+import warnings
+warnings.filterwarnings("ignore")
+import logging
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -235,6 +244,10 @@ try:
         wait_seconds = (60 - now.second % 60)
         time.sleep(wait_seconds)
         
+        # Clear terminal before printing new data
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(header)
+        print("-" * len(header))
         print(f"--- Siklus {datetime.now().strftime('%H:%M:%S')} ---")
 
         for i, handle in enumerate(driver.window_handles):
@@ -271,7 +284,7 @@ try:
 
             except Exception as e:
                 print(f"  [{username_for_tab.ljust(15)}] Gagal mengambil data: {type(e).__name__}")
-        
+
 except KeyboardInterrupt:
     print("\nBot dihentikan oleh pengguna.")
 except Exception as e:
