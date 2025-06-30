@@ -127,7 +127,6 @@ def check_chrome():
             r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
             r"C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
         ]
-        
         chrome_found = False
         for path in chrome_paths:
             expanded_path = os.path.expandvars(path)
@@ -135,7 +134,6 @@ def check_chrome():
                 print(f"OK Chrome ditemukan: {expanded_path}")
                 chrome_found = True
                 break
-        
         if not chrome_found:
             print("X Chrome tidak ditemukan")
             print("Download Chrome dari: https://www.google.com/chrome/")

@@ -28,22 +28,22 @@ def get_chrome_version():
     """Get Chrome browser version (Linux & Windows)"""
     system = platform.system().lower()
     if system == "windows":
+    try:
+        import winreg
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
+        version, _ = winreg.QueryValueEx(key, "version")
+        winreg.CloseKey(key)
+        return version
+    except:
         try:
-            import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
-            version, _ = winreg.QueryValueEx(key, "version")
-            winreg.CloseKey(key)
-            return version
+            chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+            if os.path.exists(chrome_path):
+                result = subprocess.run([chrome_path, "--version"], 
+                                      capture_output=True, text=True, timeout=10)
+                version = result.stdout.strip().split()[-1]
+                return version
         except:
-            try:
-                chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-                if os.path.exists(chrome_path):
-                    result = subprocess.run([chrome_path, "--version"], 
-                                          capture_output=True, text=True, timeout=10)
-                    version = result.stdout.strip().split()[-1]
-                    return version
-            except:
-                pass
+            pass
     else:
         # Linux/Mac
         for chrome_cmd in ["google-chrome", "google-chrome-stable", "chromium-browser", "chromium"]:
