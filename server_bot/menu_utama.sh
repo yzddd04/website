@@ -68,7 +68,17 @@ fix_imports() {
 
 setup_mongo() {
     clear
-    ./setup_mongodb_auto.sh
+    echo "========================================"
+    echo "   SETUP MONGODB CLOUD"
+    echo "========================================"
+    echo
+    echo "Project ini hanya menggunakan MongoDB Cloud (Atlas)."
+    echo "Tidak perlu install MongoDB lokal."
+    echo "Pastikan connection string sudah benar dan IP server sudah di-whitelist di MongoDB Atlas."
+    echo "Cek koneksi MongoDB Cloud:"
+    python3 test_connection.py
+    echo
+    read -p "Tekan Enter untuk kembali ke menu utama..."
     menu
 }
 
