@@ -12,7 +12,7 @@ def check_bot_status():
         try:
             if proc.info['name'] == 'python.exe':
                 cmdline = proc.info['cmdline']
-                if cmdline and any('bot_local.py' in arg for arg in cmdline):
+                if cmdline and any('bot_cloud.py' in arg for arg in cmdline):
                     bot_processes.append({
                         'pid': proc.info['pid'],
                         'create_time': datetime.fromtimestamp(proc.info['create_time']),

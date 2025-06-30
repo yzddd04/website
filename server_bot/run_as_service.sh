@@ -9,7 +9,7 @@ echo "Bot akan berjalan di background"
 echo "Log akan disimpan di bot_service.log"
 echo
 echo "Untuk menghentikan bot:"
-echo "1. Gunakan: pkill -f bot_local.py"
+echo "1. Gunakan: pkill -f bot_cloud.py"
 echo "2. Atau: killall python3"
 echo "3. Atau gunakan: ./stop_service.sh"
 echo
@@ -22,7 +22,7 @@ python3 check_readiness.py > temp_readiness.txt 2>&1
 if grep -q "SEMUA CHECK BERHASIL" temp_readiness.txt; then
     echo
     echo "Sistem siap! Memulai bot di background..."
-    nohup python3 bot_local.py > bot_service.log 2>&1 &
+    nohup python3 bot_cloud.py > bot_service.log 2>&1 &
     echo "Bot berhasil dimulai di background!"
     echo "Log file: bot_service.log"
     echo "Process ID: $!"

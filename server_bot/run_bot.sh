@@ -19,7 +19,7 @@ if grep -q "SEMUA CHECK BERHASIL" temp_readiness.txt; then
     echo
     echo "Sistem siap! Memulai bot..."
     echo
-    python3 bot_local.py
+    python3 bot_cloud.py
 else
     echo
     echo "Sistem belum siap untuk menjalankan bot!"

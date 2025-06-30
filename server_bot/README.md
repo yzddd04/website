@@ -155,7 +155,7 @@ run_bot.bat
 run_as_service.bat
 
 # Linux/Mac
-python bot_local.py
+python bot_cloud.py
 ```
 
 ### 5. Monitoring
@@ -175,7 +175,7 @@ stop_service.bat
 | File | Deskripsi |
 |------|-----------|
 | `menu_utama.bat` | **Menu utama** - Interface lengkap |
-| `bot_local.py` | Script utama bot (otomatis dari database) |
+| `bot_cloud.py` | Script utama bot (otomatis dari database, cloud only) |
 | `add_username.py` | Script manajemen username database |
 | `check_database.py` | Script cek status database |
 | `check_bot_status.py` | Script cek status bot yang berjalan |
