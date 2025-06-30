@@ -13,4 +13,13 @@ try:
     sys.exit(0)
 except Exception as e:
     print(f'MongoDB Cloud connection failed: {e}')
-    sys.exit(1) 
+    print('Mencoba ulang dengan tlsAllowInvalidCertificates=True (hanya untuk debug)...')
+    try:
+        client = MongoClient(MONGO_URI, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=10000, tlsAllowInvalidCertificates=True)
+        client.admin.command('ping')
+        print('MongoDB Cloud connection successful (WARNING: tlsAllowInvalidCertificates=True, jangan gunakan di production!)')
+        client.close()
+        sys.exit(0)
+    except Exception as e2:
+        print(f'MongoDB Cloud connection failed (even with tlsAllowInvalidCertificates=True): {e2}')
+        sys.exit(1) 
