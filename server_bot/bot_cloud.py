@@ -145,7 +145,7 @@ try:
     # Timeout diatur agar bot tidak hang jika DB tidak tersedia
     ca = certifi.where()
     client = MongoClient(
-        'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net/bot_mongodb?retryWrites=true&w=majority&appName=server',
+        'mongodb+srv://ahmadyazidarifuddin04:Qwerty12345.@server.hvqf3sk.mongodb.net//bot_mongodb?retryWrites=true&w=majority&appName=server',
         tlsCAFile=ca,
         serverSelectionTimeoutMS=15000 # Beri waktu 15 detik untuk koneksi
     )

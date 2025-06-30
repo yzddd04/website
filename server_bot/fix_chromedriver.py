@@ -7,6 +7,7 @@ import os
 import shutil
 import zipfile
 import requests
+import platform
 from pathlib import Path
 
 def install_packages():
@@ -24,28 +25,39 @@ def install_packages():
     print()
 
 def get_chrome_version():
-    """Get Chrome browser version"""
-    try:
-        import winreg
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
-        version, _ = winreg.QueryValueEx(key, "version")
-        winreg.CloseKey(key)
-        return version
-    except:
+    """Get Chrome browser version (Linux & Windows)"""
+    system = platform.system().lower()
+    if system == "windows":
         try:
-            # Alternative method
-            chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
-            if os.path.exists(chrome_path):
-                result = subprocess.run([chrome_path, "--version"], 
-                                      capture_output=True, text=True, timeout=10)
-                version = result.stdout.strip().split()[-1]
-                return version
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon")
+            version, _ = winreg.QueryValueEx(key, "version")
+            winreg.CloseKey(key)
+            return version
         except:
-            pass
+            try:
+                chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+                if os.path.exists(chrome_path):
+                    result = subprocess.run([chrome_path, "--version"], 
+                                          capture_output=True, text=True, timeout=10)
+                    version = result.stdout.strip().split()[-1]
+                    return version
+            except:
+                pass
+    else:
+        # Linux/Mac
+        for chrome_cmd in ["google-chrome", "google-chrome-stable", "chromium-browser", "chromium"]:
+            try:
+                result = subprocess.run([chrome_cmd, "--version"], capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    version = result.stdout.strip().split()[-1]
+                    return version
+            except:
+                continue
     return None
 
 def download_chromedriver(version):
-    """Download ChromeDriver manually"""
+    """Download ChromeDriver sesuai OS"""
     print(f"Downloading ChromeDriver for Chrome version: {version}")
     
     # Extract major version
@@ -54,6 +66,17 @@ def download_chromedriver(version):
     # ChromeDriver download URL
     base_url = "https://chromedriver.storage.googleapis.com"
     
+    system = platform.system().lower()
+    if system == "windows":
+        zip_name = "chromedriver_win32.zip"
+        driver_name = "chromedriver.exe"
+    elif system == "darwin":
+        zip_name = "chromedriver_mac64.zip"
+        driver_name = "chromedriver"
+    else:
+        zip_name = "chromedriver_linux64.zip"
+        driver_name = "chromedriver"
+    
     try:
         # Get latest version for this Chrome major version
         version_url = f"{base_url}/LATEST_RELEASE_{major_version}"
@@ -61,7 +84,7 @@ def download_chromedriver(version):
         driver_version = response.text.strip()
         
         # Download ChromeDriver
-        download_url = f"{base_url}/{driver_version}/chromedriver_win32.zip"
+        download_url = f"{base_url}/{driver_version}/{zip_name}"
         print(f"Downloading from: {download_url}")
         
         response = requests.get(download_url, timeout=30)
@@ -79,10 +102,11 @@ def download_chromedriver(version):
         os.remove(temp_zip)
         
         # Make executable
-        chromedriver_path = "chromedriver.exe"
-        if os.path.exists(chromedriver_path):
-            print(f"✓ ChromeDriver downloaded: {chromedriver_path}")
-            return chromedriver_path
+        if os.path.exists(driver_name):
+            if system != "windows":
+                os.chmod(driver_name, 0o755)
+            print(f"✓ ChromeDriver downloaded: {driver_name}")
+            return driver_name
         
     except Exception as e:
         print(f"✗ Failed to download ChromeDriver: {e}")
@@ -109,10 +133,12 @@ def fix_webdriver_manager():
         print(f"✗ Failed to fix webdriver-manager: {e}")
 
 def test_selenium():
-    """Test Selenium with Chrome"""
+    """Test Selenium with Chrome (Linux & Windows)"""
     print("Testing Selenium setup...")
     
-    test_code = '''
+    system = platform.system().lower()
+    driver_name = "chromedriver.exe" if system == "windows" else "./chromedriver"
+    test_code = f'''
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -138,8 +164,8 @@ except Exception as e:
     try:
         # Method 2: Use local chromedriver
         print("Testing local chromedriver method...")
-        if os.path.exists("chromedriver.exe"):
-            service = Service("chromedriver.exe")
+        if os.path.exists(r"{driver_name}"):
+            service = Service(r"{driver_name}")
             options = webdriver.ChromeOptions()
             options.add_argument("--headless")
             options.add_argument("--no-sandbox")
@@ -158,7 +184,7 @@ except Exception as e:
     
     try:
         result = subprocess.run([sys.executable, '-c', test_code], 
-                              capture_output=True, text=True, timeout=30)
+                              capture_output=True, text=True, timeout=60)
         print(result.stdout)
         return result.returncode == 0
     except subprocess.TimeoutExpired:
@@ -204,9 +230,9 @@ def main():
         print()
         print("Manual troubleshooting required:")
         print("1. Update Chrome browser to latest version")
-        print("2. Check antivirus software (may block ChromeDriver)")
-        print("3. Run as administrator")
-        print("4. Check Windows Defender settings")
+        print("2. Check Chrome installation (sudo apt install google-chrome-stable)")
+        print("3. Check permissions: chmod +x ./chromedriver")
+        print("4. Try running: ./fix_chromedriver.sh")
         return False
 
 if __name__ == "__main__":

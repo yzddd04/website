@@ -1,5 +1,6 @@
 import sys
 import os
+import platform
 from pymongo import MongoClient
 
 def check_python_version():
@@ -31,7 +32,7 @@ def check_dependencies():
     
     if missing:
         print(f"\nDependencies yang perlu diinstall: {', '.join(missing)}")
-        print("Jalankan: pip install " + " ".join(missing))
+        print("Jalankan: pip3 install " + " ".join(missing))
         return False
     else:
         print("\nOK Semua dependencies terinstall")
@@ -83,24 +84,80 @@ def check_database_data():
 def check_chrome():
     """Mengecek Chrome browser."""
     print("\n=== CEK CHROME BROWSER ===")
-    chrome_paths = [
-        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-        r"C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
-    ]
     
-    chrome_found = False
-    for path in chrome_paths:
-        expanded_path = os.path.expandvars(path)
-        if os.path.exists(expanded_path):
-            print(f"OK Chrome ditemukan: {expanded_path}")
-            chrome_found = True
-            break
+    system = platform.system().lower()
     
-    if not chrome_found:
-        print("X Chrome tidak ditemukan")
-        print("Download Chrome dari: https://www.google.com/chrome/")
-        return False
+    if system == "linux":
+        # Check for Chrome on Linux
+        chrome_paths = [
+            "/usr/bin/google-chrome",
+            "/usr/bin/google-chrome-stable",
+            "/usr/bin/chromium-browser",
+            "/usr/bin/chromium"
+        ]
+        
+        chrome_found = False
+        for path in chrome_paths:
+            if os.path.exists(path):
+                print(f"OK Chrome ditemukan: {path}")
+                chrome_found = True
+                break
+        
+        # Also check if chrome is in PATH
+        if not chrome_found:
+            try:
+                import subprocess
+                result = subprocess.run(['google-chrome', '--version'], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    print(f"OK Chrome ditemukan: {result.stdout.strip()}")
+                    chrome_found = True
+            except:
+                pass
+        
+        if not chrome_found:
+            print("X Chrome tidak ditemukan")
+            print("Install Chrome dengan: sudo apt install google-chrome-stable")
+            return False
+        
+    elif system == "windows":
+        # Windows paths
+        chrome_paths = [
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+            r"C:\Users\%USERNAME%\AppData\Local\Google\Chrome\Application\chrome.exe"
+        ]
+        
+        chrome_found = False
+        for path in chrome_paths:
+            expanded_path = os.path.expandvars(path)
+            if os.path.exists(expanded_path):
+                print(f"OK Chrome ditemukan: {expanded_path}")
+                chrome_found = True
+                break
+        
+        if not chrome_found:
+            print("X Chrome tidak ditemukan")
+            print("Download Chrome dari: https://www.google.com/chrome/")
+            return False
+    
+    else:
+        # macOS
+        chrome_paths = [
+            "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        ]
+        
+        chrome_found = False
+        for path in chrome_paths:
+            if os.path.exists(path):
+                print(f"OK Chrome ditemukan: {path}")
+                chrome_found = True
+                break
+        
+        if not chrome_found:
+            print("X Chrome tidak ditemukan")
+            print("Install Chrome dari: https://www.google.com/chrome/")
+            return False
     
     return True
 
@@ -145,7 +202,7 @@ def main():
         print("\nAnda bisa menjalankan bot dengan:")
         print("- Menu utama -> Jalankan Bot (Foreground)")
         print("- Menu utama -> Jalankan Bot (Background/Service)")
-        print("- Atau langsung: run_bot.bat")
+        print("- Atau langsung: ./run_bot.sh")
     else:
         print(f"X {total - passed} CHECK GAGAL ({passed}/{total})")
         print("Sistem belum siap untuk menjalankan bot.")
@@ -154,7 +211,7 @@ def main():
         if not check_python_version():
             print("- Install Python 3.7+")
         if not check_dependencies():
-            print("- Install dependencies: pip install pymongo selenium webdriver-manager psutil")
+            print("- Install dependencies: pip3 install pymongo selenium webdriver-manager psutil")
         if not check_mongodb():
             print("- Install dan jalankan MongoDB")
         if not check_database_data():

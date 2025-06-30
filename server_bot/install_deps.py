@@ -43,7 +43,8 @@ def main():
         'pymongo',
         'certifi',
         'dnspython',
-        'requests'
+        'requests',
+        'psutil'
     ]
     
     # Install packages
@@ -64,7 +65,8 @@ def main():
         ('webdriver_manager', 'webdriver-manager'),
         ('pymongo', 'pymongo'),
         ('certifi', 'certifi'),
-        ('requests', 'requests')
+        ('requests', 'requests'),
+        ('psutil', 'psutil')
     ]
     
     for import_name, package_name in import_tests:
@@ -86,7 +88,7 @@ def main():
     else:
         print("\n❌ SOME DEPENDENCIES FAILED")
         print("Please try manual installation:")
-        print("pip install selenium webdriver-manager pymongo certifi dnspython requests")
+        print("pip install selenium webdriver-manager pymongo certifi dnspython requests psutil")
         return False
 
 if __name__ == "__main__":

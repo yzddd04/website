@@ -68,7 +68,7 @@ fix_imports() {
 
 setup_mongo() {
     clear
-    ./setup_mongodb.sh
+    ./setup_mongodb_auto.sh
     menu
 }
 

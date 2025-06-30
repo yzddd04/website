@@ -88,9 +88,9 @@ def update_connection_strings(working_config):
                 if 'bot_mongodb' in old_uri:
                     new_uri = new_uri.replace('?retryWrites=true&w=majority&appName=server', '/bot_mongodb?retryWrites=true&w=majority&appName=server')
                 elif 'bot_stats' in old_uri:
-                    new_uri = new_uri.replace('?retryWrites=true&w=majority&appName=server', '/bot_stats?retryWrites=true&w=majority&appName=server')
+                    new_uri = new_uri.replace('?retryWrites=true&w=majority&appName=server', 'bot_stats?retryWrites=true&w=majority&appName=server')
                 elif 'botwebsite' in old_uri:
-                    new_uri = new_uri.replace('?retryWrites=true&w=majority&appName=server', '/botwebsite?retryWrites=true&w=majority&appName=server')
+                    new_uri = new_uri.replace('?retryWrites=true&w=majority&appName=server', 'botwebsite?retryWrites=true&w=majority&appName=server')
                 
                 content = content.replace(old_uri, new_uri)
                 
