@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { updateUserProfile, getMemberStats, MemberStats, User as ApiUser } from '../api';
-import { Camera, Save, User, Mail, Building, Instagram, Zap, Heart, Video } from 'lucide-react';
+import { Camera, Save, User, Mail, Building, Instagram, Heart, Video } from 'lucide-react';
 
 const Profile: React.FC = () => {
   const { user, setUser } = useAuth();
@@ -23,29 +23,26 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (user && (user.socialLinks?.instagram || user.socialLinks?.tiktok)) {
-        const usernameToFetch = user.socialLinks?.instagram || user.socialLinks?.tiktok;
-        if (usernameToFetch) {
-            setIsLoadingStats(true);
-            try {
-                const fetchedStats = await getMemberStats(usernameToFetch);
-                setStats(fetchedStats);
-                if (fetchedStats.tiktok || fetchedStats.instagram) {
-                    if(setUser) {
-                        setUser((prevUser: ApiUser | null) => {
-                            if (!prevUser) return null;
-                            const updatedUser = { ...prevUser };
-                            if(fetchedStats.tiktok) updatedUser.tiktokFollowers = fetchedStats.tiktok.followers;
-                            if(fetchedStats.instagram) updatedUser.instagramFollowers = fetchedStats.instagram.followers;
-                            return updatedUser;
-                        });
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to fetch stats:", error);
-            } finally {
-                setIsLoadingStats(false);
+      if (user && user._id && typeof user._id === 'string' && user._id.length === 24) {
+        setIsLoadingStats(true);
+        try {
+          const fetchedStats = await getMemberStats(user._id);
+          setStats(fetchedStats);
+          if (fetchedStats.tiktok || fetchedStats.instagram) {
+            if(setUser) {
+              setUser((prevUser: ApiUser | null) => {
+                if (!prevUser) return null;
+                const updatedUser = { ...prevUser };
+                if(fetchedStats.tiktok) updatedUser.tiktokFollowers = fetchedStats.tiktok.followers;
+                if(fetchedStats.instagram) updatedUser.instagramFollowers = fetchedStats.instagram.followers;
+                return updatedUser;
+              });
             }
+          }
+        } catch (error) {
+          console.error("Failed to fetch stats:", error);
+        } finally {
+          setIsLoadingStats(false);
         }
       } else {
         setIsLoadingStats(false);
@@ -106,7 +103,10 @@ const Profile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !user._id || typeof user._id !== 'string' || user._id.length !== 24) {
+      alert('User ID tidak valid. Silakan login ulang.');
+      return;
+    }
 
     try {
       const dataToUpdate = {
@@ -117,14 +117,15 @@ const Profile: React.FC = () => {
         socialLinks: {
           tiktok: formData.tiktokUsername,
           instagram: formData.instagramUsername,
-        }
+        },
       };
-      const result = await updateUserProfile(user.id, dataToUpdate);
+      const result = await updateUserProfile(user._id, dataToUpdate);
       console.log('Profile updated:', result);
       if(setUser) {
           // Map Member to User type for setUser
           const mappedUser = {
             id: result.user._id || result.user.id,
+            _id: result.user._id,
             email: result.user.email,
             name: result.user.name,
             department: result.user.department,
@@ -165,9 +166,9 @@ const Profile: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <h2 className="mb-4 text-2xl font-bold text-gray-900">Access Denied</h2>
           <p className="text-gray-600">Please login to access your profile.</p>
         </div>
       </div>
@@ -175,28 +176,28 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="px-4 py-12 mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div className="overflow-hidden bg-white rounded-2xl shadow-xl">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-12">
+        <div className="px-8 py-12 bg-gradient-to-r from-purple-600 to-blue-600">
           <div className="flex items-center space-x-6">
             <div className="relative">
               <img
                 src={formData.profileImage || `https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2`}
                 alt={formData.name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                className="object-cover w-24 h-24 rounded-full border-4 border-white shadow-lg"
               />
               {isEditing && (
-                <button className="absolute bottom-0 right-0 bg-white rounded-full p-2 shadow-lg hover:bg-gray-50 transition-colors">
-                  <Camera className="h-4 w-4 text-gray-600" />
+                <button className="absolute right-0 bottom-0 p-2 bg-white rounded-full shadow-lg transition-colors hover:bg-gray-50">
+                  <Camera className="w-4 h-4 text-gray-600" />
                 </button>
               )}
             </div>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-2">
+              <h1 className="mb-2 text-3xl font-bold text-white">
                 {isEditing ? formData.name : user.name}
               </h1>
-              <p className="text-purple-100 mb-4">
+              <p className="mb-4 text-purple-100">
                 {isEditing ? formData.department : user.department}
               </p>
               <div className="flex items-center space-x-4">
@@ -204,10 +205,10 @@ const Profile: React.FC = () => {
                   {currentBadge.icon}
                 </div>
                 <div>
-                  <p className="text-white font-semibold">{currentBadge.name}</p>
+                  <p className="font-semibold text-white">{currentBadge.name}</p>
                   <p className="text-purple-100 text-sm min-h-[24px]">
                     {isLoadingStats ? (
-                      <span className="inline-block w-16 h-4 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 animate-pulse rounded"></span>
+                      <span className="inline-block w-16 h-4 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 rounded animate-pulse"></span>
                     ) : (
                       `${totalFollowers.toLocaleString()} total followers`
                     )}
@@ -219,7 +220,7 @@ const Profile: React.FC = () => {
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                  className="px-6 py-2 font-semibold text-purple-600 bg-white rounded-lg transition-colors hover:bg-gray-50"
                 >
                   Edit Profile
                 </button>
@@ -227,14 +228,14 @@ const Profile: React.FC = () => {
                 <div className="space-x-3">
                   <button
                     onClick={handleSave}
-                    className="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold hover:bg-gray-50 transition-colors inline-flex items-center space-x-2"
+                    className="inline-flex items-center px-4 py-2 space-x-2 font-semibold text-purple-600 bg-white rounded-lg transition-colors hover:bg-gray-50"
                   >
-                    <Save className="h-4 w-4" />
+                    <Save className="w-4 h-4" />
                     <span>Save</span>
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="bg-purple-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-400 transition-colors"
+                    className="px-4 py-2 font-semibold text-white bg-purple-500 rounded-lg transition-colors hover:bg-purple-400"
                   >
                     Cancel
                   </button>
@@ -246,14 +247,14 @@ const Profile: React.FC = () => {
 
         {/* Profile Form */}
         <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             {/* Personal Information */}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Personal Information</h2>
+              <h2 className="mb-6 text-xl font-bold text-gray-900">Personal Information</h2>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="h-4 w-4 inline mr-2" />
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    <User className="inline mr-2 w-4 h-4" />
                     Full Name
                   </label>
                   {isEditing ? (
@@ -262,25 +263,32 @@ const Profile: React.FC = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.name}</p>
+                    <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">{user.name}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="h-4 w-4 inline mr-2" />
-                    Email
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    Username
                   </label>
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.email}</p>
-                  <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                  <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">{user.username || 'Not set'}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Building className="h-4 w-4 inline mr-2" />
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    <Mail className="inline mr-2 w-4 h-4" />
+                    Email
+                  </label>
+                  <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">{user.email}</p>
+                  <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
+                </div>
+
+                <div>
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    <Building className="inline mr-2 w-4 h-4" />
                     Department
                   </label>
                   {isEditing ? (
@@ -288,19 +296,19 @@ const Profile: React.FC = () => {
                       name="department"
                       value={formData.department}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     >
                       {departments.map(dept => (
                         <option key={dept} value={dept}>{dept}</option>
                       ))}
                     </select>
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">{user.department}</p>
+                    <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">{user.department}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
                     Bio
                   </label>
                    {isEditing ? (
@@ -309,7 +317,7 @@ const Profile: React.FC = () => {
                       value={formData.bio}
                       onChange={handleInputChange}
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                       placeholder="Ceritakan sedikit tentang dirimu..."
                     />
                   ) : (
@@ -323,11 +331,11 @@ const Profile: React.FC = () => {
 
             {/* Social Media Stats */}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Social Media Statistics</h2>
+              <h2 className="mb-6 text-xl font-bold text-gray-900">Social Media Statistics</h2>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="h-4 w-4 inline mr-2 text-pink-500" />
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    <User className="inline mr-2 w-4 h-4 text-pink-500" />
                     TikTok Username
                   </label>
                   {isEditing ? (
@@ -337,44 +345,31 @@ const Profile: React.FC = () => {
                       value={formData.tiktokUsername}
                       onChange={handleInputChange}
                       placeholder="masukkan username tiktok"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">
+                    <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">
                       {user.socialLinks?.tiktok || 'Not set'}
                     </p>
                   )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Zap className="h-4 w-4 inline mr-2 text-pink-500" />
-                    TikTok Followers
-                  </label>
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg min-h-[28px]">
-                    {isLoadingStats ? (
-                      <span className="inline-block w-20 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded"></span>
-                    ) : (
-                      stats?.tiktok?.followers?.toLocaleString() ?? 'N/A'
-                    )}
-                  </p>
-                </div>
                 {!isLoadingStats && stats?.tiktok && (
                     <>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <Heart className="h-4 w-4 inline mr-2 text-pink-500" />
+                          <label className="block mb-2 text-sm font-medium text-gray-700">
+                            <Heart className="inline mr-2 w-4 h-4 text-pink-500" />
                             TikTok Likes
                           </label>
-                          <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">
+                          <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">
                             {stats.tiktok.likes?.toLocaleString() ?? 'N/A'}
                           </p>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            <Video className="h-4 w-4 inline mr-2 text-pink-500" />
+                          <label className="block mb-2 text-sm font-medium text-gray-700">
+                            <Video className="inline mr-2 w-4 h-4 text-pink-500" />
                             TikTok Videos
                           </label>
-                           <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">
+                           <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">
                             {stats.tiktok.videos?.toLocaleString() ?? 'N/A'}
                           </p>
                         </div>
@@ -382,8 +377,8 @@ const Profile: React.FC = () => {
                 )}
 
                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Instagram className="h-4 w-4 inline mr-2 text-purple-600" />
+                  <label className="block mb-2 text-sm font-medium text-gray-700">
+                    <Instagram className="inline mr-2 w-4 h-4 text-purple-600" />
                     Instagram Username
                   </label>
                   {isEditing ? (
@@ -393,44 +388,13 @@ const Profile: React.FC = () => {
                       value={formData.instagramUsername}
                       onChange={handleInputChange}
                       placeholder="masukkan username instagram"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="px-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     />
                   ) : (
-                    <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg">
+                    <p className="px-4 py-3 text-gray-900 bg-gray-50 rounded-lg">
                       {user.socialLinks?.instagram || 'Not set'}
                     </p>
                   )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Zap className="h-4 w-4 inline mr-2 text-purple-600" />
-                    Instagram Followers
-                  </label>
-                  <p className="text-gray-900 bg-gray-50 px-4 py-3 rounded-lg min-h-[28px]">
-                    {isLoadingStats ? (
-                      <span className="inline-block w-20 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded"></span>
-                    ) : (
-                      stats?.instagram?.followers?.toLocaleString() ?? 'N/A'
-                    )}
-                  </p>
-                </div>
-                 <div>
-                    <h3 className="text-lg font-bold text-gray-800 mt-8 mb-4">Total Followers</h3>
-                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-xl text-center">
-                        <p className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2 min-h-[40px]">
-                            {isLoadingStats ? (
-                              <span className="inline-block w-24 h-8 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 animate-pulse rounded"></span>
-                            ) : (
-                              totalFollowers.toLocaleString()
-                            )}
-                        </p>
-                        <div className="flex items-center justify-center space-x-2 text-gray-600">
-                             <div className={`w-6 h-6 rounded-full bg-gradient-to-r ${currentBadge.color} flex items-center justify-center text-sm`}>
-                                {currentBadge.icon}
-                            </div>
-                            <span>{currentBadge.name}</span>
-                        </div>
-                    </div>
                 </div>
               </div>
             </div>

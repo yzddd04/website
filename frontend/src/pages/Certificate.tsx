@@ -1,27 +1,36 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Download, ExternalLink, Award, Calendar, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+interface CertificateData {
+  id: string;
+  recipientName: string;
+  badge: string;
+  totalFollowers: number;
+  issueDate: string;
+  department: string;
+  verificationUrl: string;
+}
+
 const Certificate: React.FC = () => {
   const { credential } = useParams();
   const certificateRef = useRef<HTMLDivElement>(null);
+  const [certificateData, setCertificateData] = useState<CertificateData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock certificate data (in real app, fetch from API)
-  const certificateData = {
-    id: credential || 'sample-cert-123',
-    recipientName: 'John Doe',
-    badge: 'silver',
-    totalFollowers: 25000,
-    issueDate: new Date().toLocaleDateString('id-ID', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }),
-    department: 'Teknik Informatika',
-    verificationUrl: `${window.location.origin}/certificate/${credential}`
-  };
+  useEffect(() => {
+    if (credential) {
+      fetch(`/api/certificate/${credential}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Certificate not found');
+          return res.json();
+        })
+        .then(setCertificateData)
+        .catch(err => setError(err.message));
+    }
+  }, [credential]);
 
   const getBadgeDetails = (badge: string) => {
     switch (badge) {
@@ -38,6 +47,13 @@ const Certificate: React.FC = () => {
     }
   };
 
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-600 font-bold">{error}</div>;
+  }
+  if (!certificateData) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-500">Loading certificate...</div>;
+  }
+
   const badgeDetails = getBadgeDetails(certificateData.badge);
 
   const downloadPDF = async () => {
@@ -47,12 +63,10 @@ const Certificate: React.FC = () => {
         useCORS: true,
         backgroundColor: '#ffffff'
       });
-      
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('landscape', 'mm', 'a4');
       const imgWidth = 297;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save(`ITS-Creators-Certificate-${certificateData.recipientName}.pdf`);
     }

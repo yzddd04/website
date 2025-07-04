@@ -13,7 +13,6 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     { name: 'Home', href: '/' },
     { name: 'Anggota', href: '/members' },
     { name: 'Benefits', href: '/benefits' },
-    { name: 'News', href: '/news' },
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -24,7 +23,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="min-h-screen flex flex-col">
       <nav className="bg-white/80 backdrop-blur-sm shadow-lg sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -188,27 +187,24 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         {children}
       </main>
 
-      <footer className="bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <footer className="bg-gray-900 text-white mt-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
+            <div className="md:col-span-2 flex flex-col justify-between">
+              <div className="flex items-center space-x-2 mb-3">
                 <Users className="h-8 w-8 text-purple-400" />
-                <span className="text-xl font-bold">Creators Community</span>
+                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Creators Community</span>
               </div>
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-400 mb-2 leading-relaxed">
                 Komunitas creators mahasiswa ITS untuk saling support dan berkembang bersama.
               </p>
-              <p className="text-sm text-gray-500">
-                #1KontenLagi - Mari berkarya dan menginspirasi!
-              </p>
+              <p className="text-sm text-gray-500">#1KontenLagi - Mari berkarya dan menginspirasi!</p>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 <li><Link to="/benefits" className="text-gray-400 hover:text-white transition-colors">Benefits</Link></li>
                 <li><Link to="/members" className="text-gray-400 hover:text-white transition-colors">Anggota</Link></li>
-                <li><Link to="/news" className="text-gray-400 hover:text-white transition-colors">News</Link></li>
               </ul>
             </div>
             <div>
@@ -219,8 +215,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
-            <p className="text-gray-400">© 2024 ITS Creators Community. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-6 text-center">
+            <p className="text-gray-500 text-sm">© 2024 ITS Creators Community. All rights reserved.</p>
           </div>
         </div>
       </footer>

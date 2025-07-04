@@ -84,7 +84,9 @@ export async function registerUser(email: string, name: string, department: stri
 }
 
 export interface User {
-  id: string; // atau _id, sesuaikan dengan backend
+  id: string;
+  _id?: string;
+  username: string;
   email: string;
   name: string;
   department: string;
@@ -98,6 +100,7 @@ export interface User {
     tiktok?: string;
     instagram?: string;
   };
+  certificateId?: string;
 }
 
 /**
@@ -130,34 +133,6 @@ export async function loginUser(email: string, password: string): Promise<{user:
     }
     throw new Error('Terjadi kesalahan saat login');
   }
-}
-
-export interface Member {
-  _id?: string;
-  name: string;
-  email: string;
-  username: string;
-  department: string;
-  tiktokFollowers: number;
-  instagramFollowers: number;
-  badge: string;
-  isAdmin: boolean;
-  profileImage: string;
-  joinDate?: string;
-}
-
-// Members
-export async function getMembers(): Promise<Member[]> {
-  const res = await fetchWithFallback('/api/members');
-  return res.json();
-}
-export async function addMember(member: Member): Promise<Member> {
-  const res = await fetchWithFallback('/api/members', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(member)
-  });
-  return res.json();
 }
 
 export interface News {
@@ -225,7 +200,7 @@ export interface Stats {
  * @returns {Promise<Stats>}
  */
 export async function getStats(): Promise<Stats> {
-  const res = await fetchWithFallback('/api/members/stats');
+  const res = await fetchWithFallback('/api/users');
   return res.json();
 }
 
@@ -247,11 +222,11 @@ export interface MemberStats {
 }
 
 // User Profile
-export async function getMemberStats(username: string): Promise<MemberStats> {
-  if (!username) {
+export async function getMemberStats(userId: string): Promise<MemberStats> {
+  if (!userId) {
     return { tiktok: null, instagram: null };
   }
-  const res = await fetchWithFallback(`/api/members/${username}/stats`);
+  const res = await fetchWithFallback(`/api/users/id/${userId}`);
   if (!res.ok) {
     // throw new Error('Failed to fetch member stats');
     console.error('Failed to fetch member stats');
@@ -260,7 +235,7 @@ export async function getMemberStats(username: string): Promise<MemberStats> {
   return res.json();
 }
 
-export async function updateUserProfile(userId: string, profileData: Partial<Member>): Promise<{user: Member}> {
+export async function updateUserProfile(userId: string, profileData: Partial<User>): Promise<{user: User}> {
   const res = await fetchWithFallback(`/api/users/profile/${userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -275,8 +250,31 @@ export async function updateUserProfile(userId: string, profileData: Partial<Mem
   return res.json();
 }
 
-export async function getMemberStatsHistory(username: string) {
-  const res = await fetchWithFallback(`/api/members/${username}/stats/history`);
-  if (!res.ok) throw new Error('Failed to fetch stats history');
+export async function getUser(userId: string): Promise<User> {
+  const res = await fetchWithFallback(`/api/users/id/${userId}`);
+  if (!res.ok) throw new Error('Failed to fetch user');
+  return res.json();
+}
+
+export interface FollowersGrowth {
+  growthMinute: number | null;
+  growthDay: number | null;
+  growthWeek: number | null;
+  current: number | null;
+  previousMinute: number | null;
+  previousDay: number | null;
+  previousWeek: number | null;
+  growthMinuteTiktok: number | null;
+  currentTiktok: number | null;
+  previousMinuteTiktok: number | null;
+  growthMinuteInstagram: number | null;
+  currentInstagram: number | null;
+  previousMinuteInstagram: number | null;
+  currentTimestamp?: string;
+}
+
+export async function getFollowersGrowth(username: string): Promise<FollowersGrowth> {
+  const res = await fetchWithFallback(`/api/users/${username}/followers-growth`);
+  if (!res.ok) throw new Error('Failed to fetch followers growth');
   return res.json();
 } 

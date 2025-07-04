@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Users, TrendingUp, FileText, Settings, BarChart3, PenTool, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Users, TrendingUp, FileText, Settings, BarChart3, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const { user, registrationEnabled, setRegistrationEnabled } = useAuth();
@@ -19,33 +19,6 @@ const AdminDashboard: React.FC = () => {
       </div>
     );
   }
-
-  const adminStats = [
-    {
-      icon: <Users className="h-6 w-6 text-blue-600" />,
-      label: 'Total Members',
-      value: '1,234',
-      change: '+45 this month'
-    },
-    {
-      icon: <TrendingUp className="h-6 w-6 text-green-600" />,
-      label: 'Total Followers',
-      value: '2.5M',
-      change: '+150K this month'
-    },
-    {
-      icon: <FileText className="h-6 w-6 text-purple-600" />,
-      label: 'Certificates Issued',
-      value: '892',
-      change: '+67 this month'
-    },
-    {
-      icon: <BarChart3 className="h-6 w-6 text-orange-600" />,
-      label: 'Articles Published',
-      value: '156',
-      change: '+12 this month'
-    }
-  ];
 
   const recentMembers = [
     {
@@ -82,13 +55,6 @@ const AdminDashboard: React.FC = () => {
   };
 
   const adminActions = [
-    {
-      icon: <PenTool className="h-5 w-5" />,
-      title: 'Write Article',
-      description: 'Publish news and updates',
-      href: '/write',
-      color: 'bg-blue-500 hover:bg-blue-600'
-    },
     {
       icon: <Users className="h-5 w-5" />,
       title: 'Manage Members',
@@ -148,20 +114,6 @@ const AdminDashboard: React.FC = () => {
             }
           </p>
         </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {adminStats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-6 shadow-lg border border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              {stat.icon}
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-            <p className="text-gray-600 text-sm mb-2">{stat.label}</p>
-            <p className="text-green-600 text-xs font-medium">{stat.change}</p>
-          </div>
-        ))}
       </div>
 
       {/* Admin Actions */}
