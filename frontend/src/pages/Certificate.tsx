@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Download, ExternalLink, Award, Calendar, CheckCircle } from 'lucide-react';
+import { Download, ExternalLink, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface CertificateData {
   id: string;
@@ -12,25 +13,66 @@ interface CertificateData {
   issueDate: string;
   department: string;
   verificationUrl: string;
+  instagramFollowers?: number;
+  tiktokFollowers?: number;
 }
+
+// TypeScript typing untuk CertificateText agar linter tidak error
+type CertificateTextProps = {
+  children: React.ReactNode;
+  top?: string | number;
+  left?: string | number;
+  right?: string | number;
+  bottom?: string | number;
+  width?: string;
+  textAlign?: string;
+  fontSize?: string;
+  color?: string;
+  fontWeight?: string;
+  style?: React.CSSProperties;
+};
 
 const Certificate: React.FC = () => {
   const { credential } = useParams();
   const certificateRef = useRef<HTMLDivElement>(null);
   const [certificateData, setCertificateData] = useState<CertificateData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'live' | 'appreciation'>('live');
+  const [loading, setLoading] = useState(false);
+
+  // Simulasi userId, ganti dengan userId login sebenarnya jika ada auth
+  const userId = 'USER_ID_SAMPLE';
 
   useEffect(() => {
-    if (credential) {
-      fetch(`/api/certificate/${credential}`)
-        .then(res => {
-          if (!res.ok) throw new Error('Certificate not found');
-          return res.json();
+    if (mode === 'live') {
+      if (credential) {
+        setLoading(true);
+        fetch(`/api/certificate/${credential}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Certificate not found');
+            return res.json();
+          })
+          .then(data => { setCertificateData(data); setLoading(false); })
+          .catch(err => { setError(err.message); setLoading(false); });
+      }
+    } else if (mode === 'appreciation') {
+      // Buat snapshot baru, lalu fetch datanya
+      setLoading(true);
+      fetch('/api/certificate/appreciation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      })
+        .then(res => res.json())
+        .then(result => {
+          if (!result.certificateId) throw new Error('Gagal membuat certificate appreciation');
+          return fetch(`/api/certificate/appreciation/${result.certificateId}`);
         })
-        .then(setCertificateData)
-        .catch(err => setError(err.message));
+        .then(res => res.json())
+        .then(data => { setCertificateData(data); setLoading(false); })
+        .catch(err => { setError(err.message); setLoading(false); });
     }
-  }, [credential]);
+  }, [credential, mode]);
 
   const getBadgeDetails = (badge: string) => {
     switch (badge) {
@@ -72,124 +114,170 @@ const Certificate: React.FC = () => {
     }
   };
 
+  // Dummy followers, replace with real if available in certificateData
+  const instagramFollowers = certificateData.instagramFollowers ?? 0;
+  const tiktokFollowers = certificateData.tiktokFollowers ?? 0;
+  const totalFollowers = certificateData.totalFollowers ?? (instagramFollowers + tiktokFollowers);
+
+  // Komponen fleksibel untuk teks overlay di sertifikat
+  const CertificateText = ({
+    children,
+    top,
+    left,
+    right,
+    bottom,
+    width = 'auto',
+    textAlign = 'left',
+    fontSize = '1.4rem',
+    color = '#3b2f13',
+    fontWeight = 'normal',
+    style = {}
+  }: CertificateTextProps) => (
+    <div
+      style={{
+        position: 'absolute',
+        top,
+        left,
+        right,
+        bottom,
+        width,
+        textAlign,
+        fontSize,
+        color,
+        fontWeight,
+        ...style
+      }}
+    >
+      {children}
+    </div>
+  );
+
+  // Komponen reusable untuk QR code + teks, posisi dan resolusi bisa diatur
+  const CertificateQRCodeBlock = ({
+    top,
+    left,
+    right,
+    bottom,
+    width = 350,
+    textAlign = 'right',
+    children
+  }: {
+    top?: string | number,
+    left?: string | number,
+    right?: string | number,
+    bottom?: string | number,
+    width?: string | number,
+    textAlign?: 'left' | 'right' | 'center',
+    children: React.ReactNode
+  }) => (
+    <div
+      style={{
+        position: 'absolute',
+        top,
+        left,
+        right,
+        bottom,
+        width,
+        textAlign,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: textAlign === 'right' ? 'flex-end' : textAlign === 'left' ? 'flex-start' : 'center'
+      }}
+    >
+      <QRCodeCanvas value={certificateData.verificationUrl} size={1024} bgColor="transparent" style={{ width: 100, height: 100 }} />
+      {children}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Digital Certificate Verification
-          </h1>
-          <p className="text-gray-600">
-            This certificate can be verified at: {certificateData.verificationUrl}
-          </p>
+        {/* Pilihan mode sertifikat */}
+        <div className="mb-6 flex gap-6 items-center">
+          <label>
+            <input type="radio" name="certmode" value="live" checked={mode === 'live'} onChange={() => setMode('live')} /> Live Certificate
+          </label>
+          <label>
+            <input type="radio" name="certmode" value="appreciation" checked={mode === 'appreciation'} onChange={() => setMode('appreciation')} /> Certificate of Appreciation
+          </label>
         </div>
-
-        {/* Certificate */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden mb-8">
-          <div 
-            ref={certificateRef}
-            className="relative p-12 bg-gradient-to-br from-purple-50 to-blue-50"
-            style={{ minHeight: '600px' }}
-          >
-            {/* Decorative Border */}
-            <div className="absolute inset-4 border-4 border-purple-200 rounded-xl"></div>
-            <div className="absolute inset-6 border-2 border-purple-100 rounded-lg"></div>
-
-            {/* Header */}
-            <div className="text-center mb-8 relative z-10">
-              <div className="flex justify-center mb-4">
-                <div className="w-20 h-20 bg-purple-600 rounded-full flex items-center justify-center">
-                  <Award className="h-10 w-10 text-white" />
-                </div>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                CERTIFICATE OF ACHIEVEMENT
-              </h2>
-              <p className="text-lg text-gray-600">
-                ITS Creators Community
-              </p>
-            </div>
-
-            {/* Content */}
-            <div className="text-center mb-8 relative z-10">
-              <p className="text-lg text-gray-700 mb-4">
-                This is to certify that
-              </p>
-              <h3 className="text-4xl font-bold text-purple-600 mb-4">
+        {/* Loading/Error */}
+        {loading && <div className="text-center text-gray-500">Loading certificate...</div>}
+        {error && <div className="text-center text-red-600 font-bold">{error}</div>}
+        {/* Sertifikat */}
+        {!loading && certificateData && (
+          <div ref={certificateRef} className="w-full flex justify-center items-center">
+            <div className="relative" style={{ width: '100%', maxWidth: '1000px', aspectRatio: '2000/1414', background: '#e5e7eb', borderRadius: '8px' }}>
+              <img
+                src="/1.png"
+                alt="Certificate Background"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', borderRadius: '8px' }}
+              />
+              {/* Nama */}
+              <CertificateText
+                top="220px"
+                left={0}
+                right={undefined}
+                bottom={undefined}
+                width="100%"
+                textAlign="center"
+                fontWeight="bold"
+                fontSize="3.2rem"
+                style={{ letterSpacing: 2 }}
+              >
                 {certificateData.recipientName}
-              </h3>
-              <p className="text-lg text-gray-700 mb-6">
-                from {certificateData.department}, Institut Teknologi Sepuluh Nopember
-              </p>
-              <p className="text-lg text-gray-700 mb-6">
-                has successfully achieved the status of
-              </p>
-              
-              {/* Badge Display */}
-              <div className="flex justify-center mb-6">
-                <div className={`w-24 h-24 rounded-full bg-gradient-to-r ${badgeDetails.color} flex items-center justify-center text-4xl shadow-lg`}>
-                  {badgeDetails.icon}
+              </CertificateText>
+              {/* Instagram followers di kiri atas */}
+              <CertificateText
+                top="348px"
+                left="450px"
+                width="300px"
+                textAlign="left"
+                fontWeight="normal"
+              >
+                <span>{instagramFollowers.toLocaleString()}</span>
+              </CertificateText>
+              {/* TikTok followers di kanan tengah */}
+              <CertificateText
+                top="368px"
+                left="450px"
+                width="300px"
+                textAlign="left"
+                fontWeight="nomral"
+              >
+                <span>{tiktokFollowers.toLocaleString()}</span>
+              </CertificateText>
+              {/* Total Cross-Platform di tengah bawah */}
+              <CertificateText
+                top="390px"
+                left="450px"
+                width="300px"
+                textAlign="left"
+                fontWeight="normal"
+              >
+                <span>{totalFollowers.toLocaleString()}</span>
+              </CertificateText>
+              {/* QR Code dan teks, posisi dan resolusi bisa diatur manual */}
+              <CertificateQRCodeBlock
+                right="40px"
+                bottom="40px"
+                width={350}
+                textAlign="right"
+              >
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ fontWeight: 'bold', fontSize: 16 }}>Verifikasi Sertifikat</div>
+                  <div style={{ fontSize: 13, whiteSpace: 'normal' }}>{certificateData.verificationUrl}</div>
+                  <div style={{ fontSize: 13 }}>
+                    dikeluarkan pada tanggal: {certificateData.issueDate}
+                  </div>
                 </div>
-              </div>
-              
-              <h4 className="text-2xl font-bold text-gray-900 mb-2">
-                {badgeDetails.name}
-              </h4>
-              <p className="text-lg text-gray-600 mb-6">
-                {badgeDetails.level} • {certificateData.totalFollowers.toLocaleString()} Total Followers
-              </p>
-              
-              <p className="text-gray-700">
-                in recognition of outstanding performance in content creation and social media engagement
-              </p>
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-between items-end relative z-10">
-              <div className="text-left">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Calendar className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">Issue Date</span>
-                </div>
-                <p className="font-semibold text-gray-900">
-                  {certificateData.issueDate}
-                </p>
-              </div>
-              
-              <div className="text-center">
-                <div className="w-32 h-px bg-gray-400 mb-2"></div>
-                <p className="text-sm text-gray-600">
-                  ITS Creators Community
-                </p>
-                <p className="text-xs text-gray-500">
-                  Digital Signature
-                </p>
-              </div>
-              
-              <div className="text-right">
-                <div className="flex items-center space-x-2 mb-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm text-gray-600">Verified</span>
-                </div>
-                <p className="text-xs text-gray-500 font-mono">
-                  ID: {certificateData.id}
-                </p>
-              </div>
-            </div>
-
-            {/* Background Decoration */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-5">
-              <div className="absolute top-10 left-10 w-32 h-32 bg-purple-300 rounded-full"></div>
-              <div className="absolute top-20 right-20 w-24 h-24 bg-blue-300 rounded-full"></div>
-              <div className="absolute bottom-20 left-20 w-28 h-28 bg-pink-300 rounded-full"></div>
-              <div className="absolute bottom-10 right-10 w-20 h-20 bg-yellow-300 rounded-full"></div>
+              </CertificateQRCodeBlock>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <button
             onClick={downloadPDF}
             className="inline-flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-lg"

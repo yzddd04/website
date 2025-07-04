@@ -44,9 +44,19 @@ app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from backend!' });
 });
 
+// Helper untuk generate certificateId 12 karakter huruf kapital dan angka
+function generateCertificateId() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let id = '';
+  for (let i = 0; i < 12; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
 function ensureCertificateId(user, db) {
   if (!user.certificateId) {
-    const newCertId = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+    const newCertId = generateCertificateId();
     db.collection('users').updateOne({ _id: user._id }, { $set: { certificateId: newCertId } });
     user.certificateId = newCertId;
   }
@@ -177,9 +187,19 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/members/stats', async (req, res) => {
   try {
     await client.connect();
-    const db = client.db('server_creator');
-    const stats = await db.collection('stats').find().sort({ timestamp: -1 }).limit(1).toArray();
-    res.json(stats[0] || {});
+    const dbCreatorWeb = client.db('creator_web');
+
+    // Count users (creators)
+    const activeCreators = await dbCreatorWeb.collection('users').countDocuments();
+
+    // Sum all instagramFollowers and tiktokFollowers from all users
+    const users = await dbCreatorWeb.collection('users').find().toArray();
+    let totalFollowers = 0;
+    users.forEach(user => {
+      totalFollowers += (user.instagramFollowers || 0) + (user.tiktokFollowers || 0);
+    });
+
+    res.json({ activeCreators, totalFollowers });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -273,8 +293,8 @@ app.get('/api/certificate/:credential', async (req, res) => {
         const [userId] = parts;
         user = await db.collection('users').findOne({ _id: new mongoose.Types.ObjectId(userId) });
         if (user) {
-          // Generate certificateId baru (12 digit angka random)
-          const newCertId = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+          // Generate certificateId baru (12 karakter random huruf kapital dan angka)
+          const newCertId = generateCertificateId();
           await db.collection('users').updateOne({ _id: user._id }, { $set: { certificateId: newCertId } });
           user.certificateId = newCertId;
         }
@@ -285,14 +305,16 @@ app.get('/api/certificate/:credential', async (req, res) => {
     const badge = user.badge || 'pemula';
     const totalFollowers = (user.tiktokFollowers || 0) + (user.instagramFollowers || 0);
     const issueDate = user.certificateIssueDate || new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+    // Sanitasi certificateId
+    const cleanCertificateId = (user.certificateId || '').replace(/[^A-Z0-9]/g, '').substring(0, 12);
     res.json({
-      id: user.certificateId,
+      id: cleanCertificateId,
       recipientName: user.name,
       badge,
       totalFollowers,
       issueDate,
       department: user.department,
-      verificationUrl: `${req.protocol}://${req.get('host')}/certificate/${user.certificateId}`
+      verificationUrl: `${req.protocol}://${req.get('host')}/certificate/${cleanCertificateId}`
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -319,6 +341,115 @@ app.put('/api/users/profile/:id', async (req, res) => {
     console.log('[PUT /api/users/profile/:id] result:', result.value);
     if (!result.value) return res.status(404).json({ error: 'User not found' });
     res.json(result.value);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint GET popup sponsor setting
+app.get('/api/popup-setting', async (req, res) => {
+  try {
+    await client.connect();
+    const db = client.db('creator_web');
+    const doc = await db.collection('settings').findOne({ key: 'sponsor_popup' });
+    if (!doc) {
+      // Default value if not set
+      return res.json({ enabled: false, contentType: 'text', textContent: '', imageUrl: '' });
+    }
+    // Pastikan semua field selalu ada
+    const value = doc.value || {};
+    res.json({
+      enabled: typeof value.enabled === 'boolean' ? value.enabled : false,
+      contentType: value.contentType || 'text',
+      textContent: typeof value.textContent === 'string' ? value.textContent : '',
+      imageUrl: typeof value.imageUrl === 'string' ? value.imageUrl : ''
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint PUT popup sponsor setting (admin only, simple validation)
+app.put('/api/popup-setting', async (req, res) => {
+  try {
+    // TODO: Replace with real admin check
+    // if (!req.user || !req.user.isAdmin) return res.status(403).json({ error: 'Unauthorized' });
+    await client.connect();
+    const db = client.db('creator_web');
+    const { enabled, contentType, textContent, imageUrl } = req.body;
+    if (typeof enabled !== 'boolean' || !['text','image','both'].includes(contentType)) {
+      return res.status(400).json({ error: 'Invalid data' });
+    }
+    const value = { enabled, contentType, textContent: textContent || '', imageUrl: imageUrl || '' };
+    await db.collection('settings').updateOne(
+      { key: 'sponsor_popup' },
+      { $set: { value } },
+      { upsert: true }
+    );
+    res.json({ success: true, value });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint migrasi massal certificateId semua user ke format baru (12 karakter random huruf kapital dan angka)
+app.post('/api/certificate/migrate-all', async (req, res) => {
+  try {
+    await client.connect();
+    const db = client.db('creator_web');
+    const users = await db.collection('users').find().toArray();
+    let updated = 0;
+    for (const user of users) {
+      // Jika certificateId belum sesuai format, update
+      if (!user.certificateId || !/^[A-Z0-9]{12}$/.test(user.certificateId)) {
+        const newCertId = generateCertificateId();
+        await db.collection('users').updateOne({ _id: user._id }, { $set: { certificateId: newCertId } });
+        updated++;
+      }
+    }
+    res.json({ success: true, updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint membuat Certificate of Appreciation (snapshot)
+app.post('/api/certificate/appreciation', async (req, res) => {
+  try {
+    await client.connect();
+    const db = client.db('creator_web');
+    const { userId } = req.body;
+    if (!userId) return res.status(400).json({ error: 'userId wajib diisi' });
+    const user = await db.collection('users').findOne({ _id: new mongoose.Types.ObjectId(userId) });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Snapshot data
+    const certificateId = generateCertificateId();
+    const snapshot = {
+      certificateId,
+      name: user.name,
+      username: user.username || '',
+      department: user.department || '',
+      followers: (user.instagramFollowers || 0) + (user.tiktokFollowers || 0),
+      instagramFollowers: user.instagramFollowers || 0,
+      tiktokFollowers: user.tiktokFollowers || 0,
+      createdAt: new Date(),
+    };
+    await db.collection('certificates').insertOne(snapshot);
+    res.json({ success: true, certificateId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint mengambil Certificate of Appreciation (snapshot)
+app.get('/api/certificate/appreciation/:id', async (req, res) => {
+  try {
+    await client.connect();
+    const db = client.db('creator_web');
+    const certificateId = req.params.id;
+    const cert = await db.collection('certificates').findOne({ certificateId });
+    if (!cert) return res.status(404).json({ error: 'Certificate not found' });
+    res.json(cert);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

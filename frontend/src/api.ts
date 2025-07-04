@@ -200,7 +200,7 @@ export interface Stats {
  * @returns {Promise<Stats>}
  */
 export async function getStats(): Promise<Stats> {
-  const res = await fetchWithFallback('/api/users');
+  const res = await fetchWithFallback('/api/members/stats');
   return res.json();
 }
 
@@ -276,5 +276,34 @@ export interface FollowersGrowth {
 export async function getFollowersGrowth(username: string): Promise<FollowersGrowth> {
   const res = await fetchWithFallback(`/api/users/${username}/followers-growth`);
   if (!res.ok) throw new Error('Failed to fetch followers growth');
+  return res.json();
+}
+
+export interface SponsorPopupSetting {
+  enabled: boolean;
+  contentType: 'text' | 'image' | 'both';
+  textContent: string;
+  imageUrl: string;
+}
+
+export async function getSponsorPopupSetting(): Promise<SponsorPopupSetting> {
+  const res = await fetch('/api/popup-setting');
+  if (!res.ok) throw new Error('Failed to fetch sponsor popup setting');
+  return res.json();
+}
+
+export async function updateSponsorPopupSetting(setting: SponsorPopupSetting): Promise<SponsorPopupSetting> {
+  const res = await fetch('/api/popup-setting', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(setting)
+  });
+  if (!res.ok) throw new Error('Failed to update sponsor popup setting');
+  return (await res.json()).value;
+}
+
+export async function getAllUsers(): Promise<User[]> {
+  const res = await fetchWithFallback('/api/users');
+  if (!res.ok) throw new Error('Failed to fetch users');
   return res.json();
 } 

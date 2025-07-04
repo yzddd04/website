@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Award, TrendingUp, Users, Zap, Star, Trophy, Book } from 'lucide-react';
-import { getStats } from '../api';
+import { getStats, getSponsorPopupSetting, SponsorPopupSetting } from '../api';
+import SponsorModal from '../components/SponsorModal';
 
 const Home: React.FC = () => {
   const benefits = [
@@ -38,11 +39,13 @@ const Home: React.FC = () => {
   ];
 
   const [stats, setStats] = useState([
-    { number: '0+', label: 'Active Creators' },
-    { number: '0+', label: 'Total Followers' },
-    { number: '0+', label: 'Certificates Issued' },
-    { number: '0+', label: 'Brand Partnerships' }
+    { number: '0+', label: 'Creators' },
+    { number: '0+', label: 'Total Followers' }
   ]);
+
+  // Sponsor Popup State
+  const [popupSetting, setPopupSetting] = useState<SponsorPopupSetting | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -56,10 +59,8 @@ const Home: React.FC = () => {
         };
 
         setStats([
-          { number: `${data.activeCreators}+`, label: 'Active Creators' },
-          { number: formatNumber(data.totalFollowers), label: 'Total Followers' },
-          { number: `${data.certificatesIssued}+`, label: 'Certificates Issued' },
-          { number: `${data.brandPartnerships}+`, label: 'Brand Partnerships' }
+          { number: `${data.activeCreators}+`, label: 'Creators' },
+          { number: formatNumber(data.totalFollowers), label: 'Total Followers' }
         ]);
       } catch (error) {
         console.error("Failed to fetch stats:", error);
@@ -69,8 +70,27 @@ const Home: React.FC = () => {
     fetchStats();
   }, []);
 
+  useEffect(() => {
+    getSponsorPopupSetting().then(setting => {
+      setPopupSetting(setting);
+      // Selalu tampilkan popup jika enabled
+      if (setting.enabled) {
+        setShowPopup(true);
+      }
+    });
+  }, []);
+
+  const handleClosePopup = () => {
+    setShowPopup(false);
+  };
+
   return (
     <div className="space-y-20">
+      {/* Sponsor Modal */}
+      {popupSetting && (
+        <SponsorModal isOpen={showPopup} onClose={handleClosePopup} setting={popupSetting} />
+      )}
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -116,7 +136,7 @@ const Home: React.FC = () => {
       {/* Stats Section */}
       <section className="bg-white/80 backdrop-blur-sm py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="flex flex-wrap justify-center gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">

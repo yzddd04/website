@@ -1,10 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Users, TrendingUp, FileText, Settings, BarChart3, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Users, Settings, ToggleLeft, ToggleRight } from 'lucide-react';
+import { getSponsorPopupSetting, updateSponsorPopupSetting, SponsorPopupSetting, getAllUsers, User } from '../api';
 
 const AdminDashboard: React.FC = () => {
   const { user, registrationEnabled, setRegistrationEnabled } = useAuth();
+
+  // Sponsor Popup State
+  const [popupSetting, setPopupSetting] = useState<SponsorPopupSetting | null>(null);
+  const [loadingPopup, setLoadingPopup] = useState(true);
+  const [savingPopup, setSavingPopup] = useState(false);
+  const [popupError, setPopupError] = useState<string | null>(null);
+  const [popupSuccess, setPopupSuccess] = useState<string | null>(null);
+
+  // Members & Stats State
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [userError, setUserError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getSponsorPopupSetting()
+      .then(setPopupSetting)
+      .catch(() => setPopupSetting({ enabled: true, contentType: 'text', textContent: '', imageUrl: '' }))
+      .finally(() => setLoadingPopup(false));
+
+    getAllUsers()
+      .then(setUsers)
+      .catch((err: unknown) => {
+        if (err instanceof Error) setUserError(err.message);
+        else setUserError('Gagal mengambil data member');
+      })
+      .finally(() => setLoadingUsers(false));
+  }, []);
+
+  const handlePopupChange = (field: keyof SponsorPopupSetting, value: any) => {
+    if (!popupSetting) return;
+    setPopupSetting({ ...popupSetting, [field]: value });
+  };
+
+  const handleSavePopup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!popupSetting) return;
+    setSavingPopup(true);
+    setPopupError(null);
+    setPopupSuccess(null);
+    try {
+      const updated = await updateSponsorPopupSetting(popupSetting);
+      setPopupSetting(updated);
+      setPopupSuccess('Pengaturan popup sponsor berhasil disimpan!');
+      setTimeout(() => setPopupSuccess(null), 3000);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setPopupError(err.message);
+      } else {
+        setPopupError('Gagal menyimpan pengaturan popup');
+      }
+    } finally {
+      setSavingPopup(false);
+    }
+  };
 
   if (!user || !user.isAdmin) {
     return (
@@ -20,29 +75,50 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
-  const recentMembers = [
-    {
-      name: 'Andi Pratama',
-      email: '5025211001@student.its.ac.id',
-      department: 'Teknik Informatika',
-      badge: 'silver',
-      joinDate: '2024-01-15'
-    },
-    {
-      name: 'Sari Wijaya',
-      email: '5025211002@student.its.ac.id',
-      department: 'Teknik Elektro',
-      badge: 'bronze',
-      joinDate: '2024-01-14'
-    },
-    {
-      name: 'Rizki Rahman',
-      email: '5025211003@student.its.ac.id',
-      department: 'Sistem Informasi',
-      badge: 'pemula',
-      joinDate: '2024-01-13'
-    }
-  ];
+  // Recent Members (5 terbaru, sort by _id desc)
+  const recentMembers = [...users]
+    .sort((a, b) => (b._id || '').localeCompare(a._id || ''))
+    .slice(0, 5)
+    .map(u => ({
+      name: u.name,
+      email: u.email,
+      department: u.department,
+      badge: u.badge,
+      joinDate: u._id ? new Date(parseInt(u._id.substring(0,8), 16) * 1000).toISOString().slice(0,10) : ''
+    }));
+
+  // Tambahkan fungsi getBadgeByFollowers
+  function getBadgeByFollowers(totalFollowers: number) {
+    if (totalFollowers >= 1_000_000) return 'Diamond';
+    if (totalFollowers >= 100_000) return 'Gold';
+    if (totalFollowers >= 10_000) return 'Silver';
+    if (totalFollowers >= 1_000) return 'Bronze';
+    return 'Pemula';
+  }
+
+  // Badge Distribution
+  const badgeList = ['Diamond','Gold','Silver','Bronze','Pemula'];
+  type BadgeCount = { badge: string; count: number; percentage: number };
+  const badgeCounts: BadgeCount[] = badgeList.map(badge => ({
+    badge,
+    count: users.filter(u => getBadgeByFollowers((u.tiktokFollowers || 0) + (u.instagramFollowers || 0)) === badge).length,
+    percentage: 0
+  }));
+  const totalBadges = badgeCounts.reduce((sum, b) => sum + b.count, 0) || 1;
+  badgeCounts.forEach(b => b.percentage = +(b.count / totalBadges * 100).toFixed(1));
+
+  // Department Distribution
+  const deptMap: Record<string, number> = {};
+  users.forEach(u => {
+    const dept = u.department || 'Other';
+    deptMap[dept] = (deptMap[dept] || 0) + 1;
+  });
+  const departmentCounts = Object.entries(deptMap)
+    .map(([department, count]) => ({ department, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const otherCount = users.length - departmentCounts.reduce((sum, d) => sum + d.count, 0);
+  if (otherCount > 0) departmentCounts.push({ department: 'Other', count: otherCount });
 
   const getBadgeColor = (badge: string) => {
     switch (badge) {
@@ -61,13 +137,6 @@ const AdminDashboard: React.FC = () => {
       description: 'View and manage all members',
       href: '/members',
       color: 'bg-green-500 hover:bg-green-600'
-    },
-    {
-      icon: <BarChart3 className="h-5 w-5" />,
-      title: 'View Analytics',
-      description: 'Community statistics and insights',
-      href: '/analytics',
-      color: 'bg-purple-500 hover:bg-purple-600'
     },
     {
       icon: <Settings className="h-5 w-5" />,
@@ -148,6 +217,11 @@ const AdminDashboard: React.FC = () => {
             View All
           </Link>
         </div>
+        {loadingUsers ? (
+          <div>Loading...</div>
+        ) : userError ? (
+          <div className="text-red-600">{userError}</div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -176,6 +250,7 @@ const AdminDashboard: React.FC = () => {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Community Statistics */}
@@ -183,13 +258,7 @@ const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Badge Distribution</h2>
           <div className="space-y-4">
-            {[
-              { badge: 'Diamond', count: 5, percentage: 0.5 },
-              { badge: 'Gold', count: 23, percentage: 2.3 },
-              { badge: 'Silver', count: 156, percentage: 15.6 },
-              { badge: 'Bronze', count: 445, percentage: 44.5 },
-              { badge: 'Pemula', count: 371, percentage: 37.1 }
-            ].map((item, index) => (
+            {badgeCounts.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <span className="text-gray-700">{item.badge}</span>
                 <div className="flex items-center space-x-3">
@@ -205,17 +274,10 @@ const AdminDashboard: React.FC = () => {
             ))}
           </div>
         </div>
-
         <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Department Distribution</h2>
           <div className="space-y-4">
-            {[
-              { department: 'Teknik Informatika', count: 234 },
-              { department: 'Sistem Informasi', count: 189 },
-              { department: 'Teknik Elektro', count: 167 },
-              { department: 'Desain Komunikasi Visual', count: 145 },
-              { department: 'Other', count: 265 }
-            ].map((item, index) => (
+            {departmentCounts.map((item, index) => (
               <div key={index} className="flex items-center justify-between">
                 <span className="text-gray-700 text-sm">{item.department}</span>
                 <span className="text-gray-900 font-medium">{item.count}</span>
@@ -223,6 +285,74 @@ const AdminDashboard: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Popup Sponsor Settings */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-12">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Pengaturan Popup Sponsor</h2>
+        {/* Toast Success Notification */}
+        {popupSuccess && (
+          <div className="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-3 rounded shadow-lg font-medium animate-fade-in-out transition-all">
+            {popupSuccess}
+          </div>
+        )}
+        {loadingPopup ? (
+          <div>Loading...</div>
+        ) : popupSetting && (
+          <form onSubmit={handleSavePopup} className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <label className="font-medium">Aktifkan Popup:</label>
+              <input
+                type="checkbox"
+                checked={popupSetting.enabled}
+                onChange={e => handlePopupChange('enabled', e.target.checked)}
+                className="h-5 w-5"
+              />
+            </div>
+            <div>
+              <label className="font-medium block mb-1">Tipe Konten:</label>
+              <select
+                value={popupSetting.contentType}
+                onChange={e => handlePopupChange('contentType', e.target.value)}
+                className="border rounded px-2 py-1"
+              >
+                <option value="text">Teks Saja</option>
+                <option value="image">Gambar Saja</option>
+                <option value="both">Teks & Gambar</option>
+              </select>
+            </div>
+            {(popupSetting.contentType === 'text' || popupSetting.contentType === 'both') && (
+              <div>
+                <label className="font-medium block mb-1">Isi Teks (HTML diperbolehkan):</label>
+                <textarea
+                  value={popupSetting.textContent}
+                  onChange={e => handlePopupChange('textContent', e.target.value)}
+                  className="border rounded px-2 py-1 w-full min-h-[80px]"
+                />
+              </div>
+            )}
+            {(popupSetting.contentType === 'image' || popupSetting.contentType === 'both') && (
+              <div>
+                <label className="font-medium block mb-1">URL Gambar (misal dari Google Drive):</label>
+                <input
+                  type="text"
+                  value={popupSetting.imageUrl}
+                  onChange={e => handlePopupChange('imageUrl', e.target.value)}
+                  className="border rounded px-2 py-1 w-full"
+                  placeholder="https://drive.google.com/..."
+                />
+              </div>
+            )}
+            {popupError && <div className="text-red-600 text-sm">{popupError}</div>}
+            <button
+              type="submit"
+              className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 disabled:opacity-50"
+              disabled={savingPopup}
+            >
+              {savingPopup ? 'Menyimpan...' : 'Simpan Pengaturan'}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
