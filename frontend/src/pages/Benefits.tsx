@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, TrendingUp, Users, Book, Star, Trophy, Briefcase, Target, CheckCircle } from 'lucide-react';
+import { Award, TrendingUp, Users, Book, Star, Briefcase, Target, CheckCircle } from 'lucide-react';
 
 const Benefits: React.FC = () => {
   const mainBenefits = [
@@ -105,7 +105,7 @@ const Benefits: React.FC = () => {
       <div className="text-center mb-16">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
           Benefits Bergabung dengan
-          <span className="block bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <span className="block text-purple-600">
             Creators Community
           </span>
         </h1>

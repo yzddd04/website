@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Instagram, Zap, Shield } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { getUser, User } from '../api';
+import { AiFillTikTok } from "react-icons/ai";
+import { FaSquareInstagram } from "react-icons/fa6";
+import { IoPersonCircleSharp } from "react-icons/io5";
 
 const Members: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,22 +128,20 @@ const Members: React.FC = () => {
               className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow p-6 border border-gray-100"
             >
               <div className="flex items-center space-x-4 mb-4">
-                <img
-                  src={member.profileImage}
-                  alt={member.name}
-                  className="w-16 h-16 rounded-full object-cover"
-                />
+                {member.profileImage ? (
+                  <img
+                    src={member.profileImage}
+                    alt={member.name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <IoPersonCircleSharp className="w-16 h-16 text-gray-300" />
+                )}
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-1">
                     <h3 className="text-lg font-semibold text-gray-900">
                       {member.name}
                     </h3>
-                    {member.isAdmin && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                        <Shield className="h-3 w-3 mr-1" />
-                        Admin
-                      </span>
-                    )}
                   </div>
                   <p className="text-purple-600 font-medium">
                     {member.username}
@@ -159,38 +160,52 @@ const Members: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                {/* TikTok */}
+                <a
+                  href={member.socialLinks?.tiktok ? `https://tiktok.com/@${member.socialLinks.tiktok}` : ''}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between group"
+                  style={{ textDecoration: 'none' }}
+                >
                   <div className="flex items-center space-x-2">
-                    <Zap className="h-4 w-4 text-pink-500" />
-                    <span className="text-sm text-gray-600">TikTok</span>
+                    <AiFillTikTok className="h-5 w-5 text-black group-hover:text-cyan-500 transition" />
+                    <span className="text-sm text-gray-600 group-hover:text-cyan-500 transition">TikTok</span>
                   </div>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 group-hover:text-cyan-500 transition">
                     {followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.loading ? (
-                      <span className="inline-block w-10 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded"></span>
+                      <span className="inline-block w-10 h-5 bg-gray-200 animate-pulse rounded"></span>
                     ) : (
                       formatFollowers(followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.tiktok ?? 0)
                     )}
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
+                </a>
+                {/* Instagram */}
+                <a
+                  href={member.socialLinks?.instagram ? `https://instagram.com/${member.socialLinks.instagram}` : ''}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between group"
+                  style={{ textDecoration: 'none' }}
+                >
                   <div className="flex items-center space-x-2">
-                    <Instagram className="h-4 w-4 text-pink-600" />
-                    <span className="text-sm text-gray-600">Instagram</span>
+                    <FaSquareInstagram className="h-5 w-5 text-black group-hover:text-pink-500 transition" />
+                    <span className="text-sm text-gray-600 group-hover:text-pink-500 transition">Instagram</span>
                   </div>
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 group-hover:text-pink-500 transition">
                     {followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.loading ? (
-                      <span className="inline-block w-10 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse rounded"></span>
+                      <span className="inline-block w-10 h-5 bg-gray-200 animate-pulse rounded"></span>
                     ) : (
                       formatFollowers(followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.instagram ?? 0)
                     )}
                   </span>
-                </div>
+                </a>
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-gray-600">Total Followers</span>
                     <span className="font-bold text-purple-600">
                       {followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.loading ? (
-                        <span className="inline-block w-10 h-5 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 animate-pulse rounded"></span>
+                        <span className="inline-block w-10 h-5 bg-gray-200 animate-pulse rounded"></span>
                       ) : (
                         formatFollowers((followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.tiktok ?? 0) + (followersMap[member.socialLinks?.instagram || member.socialLinks?.tiktok || member.username]?.instagram ?? 0))
                       )}

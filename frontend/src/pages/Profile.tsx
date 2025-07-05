@@ -122,24 +122,8 @@ const Profile: React.FC = () => {
       const result = await updateUserProfile(user._id, dataToUpdate);
       console.log('Profile updated:', result);
       if(setUser) {
-          // Map Member to User type for setUser
-          const mappedUser = {
-            id: result.user._id || result.user.id,
-            _id: result.user._id,
-            email: result.user.email,
-            name: result.user.name,
-            department: result.user.department,
-            isAdmin: result.user.isAdmin,
-            tiktokFollowers: result.user.tiktokFollowers,
-            instagramFollowers: result.user.instagramFollowers,
-            badge: result.user.badge,
-            profileImage: result.user.profileImage,
-            bio: result.user.bio || '',
-            socialLinks: result.user.socialLinks || {},
-            username: result.user.username,
-          };
-          setUser(mappedUser);
-          localStorage.setItem('user', JSON.stringify(mappedUser));
+        setUser(result.user);
+        localStorage.setItem('user', JSON.stringify(result.user));
       }
       alert('Profile updated successfully!');
       setIsEditing(false);
@@ -179,7 +163,7 @@ const Profile: React.FC = () => {
     <div className="px-4 py-12 mx-auto max-w-4xl sm:px-6 lg:px-8">
       <div className="overflow-hidden bg-white rounded-2xl shadow-xl">
         {/* Header */}
-        <div className="px-8 py-12 bg-gradient-to-r from-purple-600 to-blue-600">
+        <div className="px-8 py-12 bg-purple-600">
           <div className="flex items-center space-x-6">
             <div className="relative">
               <img
@@ -201,14 +185,14 @@ const Profile: React.FC = () => {
                 {isEditing ? formData.department : user.department}
               </p>
               <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${currentBadge.color} flex items-center justify-center text-xl`}>
+                <div className={`w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-xl`}>
                   {currentBadge.icon}
                 </div>
                 <div>
                   <p className="font-semibold text-white">{currentBadge.name}</p>
                   <p className="text-purple-100 text-sm min-h-[24px]">
                     {isLoadingStats ? (
-                      <span className="inline-block w-16 h-4 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 rounded animate-pulse"></span>
+                      <span className="inline-block w-16 h-4 bg-purple-200 rounded animate-pulse"></span>
                     ) : (
                       `${totalFollowers.toLocaleString()} total followers`
                     )}

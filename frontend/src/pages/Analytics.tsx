@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { TrendingUp, Users, Eye, Heart, BarChart3, Calendar, Target, Zap } from 'lucide-react';
+import { BarChart3, Calendar, Target } from 'lucide-react';
 
 const Analytics: React.FC = () => {
   const { user } = useAuth();
@@ -78,7 +78,7 @@ const Analytics: React.FC = () => {
       </div>
 
       {/* Insights */}
-      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl p-8 text-white">
+      <div className="bg-purple-600 rounded-xl p-8 text-white">
         <h2 className="text-2xl font-bold mb-4">AI-Powered Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Insights content */}

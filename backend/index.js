@@ -354,7 +354,7 @@ app.get('/api/popup-setting', async (req, res) => {
     const doc = await db.collection('settings').findOne({ key: 'sponsor_popup' });
     if (!doc) {
       // Default value if not set
-      return res.json({ enabled: false, contentType: 'text', textContent: '', imageUrl: '' });
+      return res.json({ enabled: false, contentType: 'text', textContent: '', imageUrl: '', link: '' });
     }
     // Pastikan semua field selalu ada
     const value = doc.value || {};
@@ -362,7 +362,8 @@ app.get('/api/popup-setting', async (req, res) => {
       enabled: typeof value.enabled === 'boolean' ? value.enabled : false,
       contentType: value.contentType || 'text',
       textContent: typeof value.textContent === 'string' ? value.textContent : '',
-      imageUrl: typeof value.imageUrl === 'string' ? value.imageUrl : ''
+      imageUrl: typeof value.imageUrl === 'string' ? value.imageUrl : '',
+      link: typeof value.link === 'string' ? value.link : ''
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -376,11 +377,17 @@ app.put('/api/popup-setting', async (req, res) => {
     // if (!req.user || !req.user.isAdmin) return res.status(403).json({ error: 'Unauthorized' });
     await client.connect();
     const db = client.db('creator_web');
-    const { enabled, contentType, textContent, imageUrl } = req.body;
+    const { enabled, contentType, textContent, imageUrl, link } = req.body;
     if (typeof enabled !== 'boolean' || !['text','image','both'].includes(contentType)) {
       return res.status(400).json({ error: 'Invalid data' });
     }
-    const value = { enabled, contentType, textContent: textContent || '', imageUrl: imageUrl || '' };
+    const value = {
+      enabled,
+      contentType,
+      textContent: textContent || '',
+      imageUrl: imageUrl || '',
+      link: link || ''
+    };
     await db.collection('settings').updateOne(
       { key: 'sponsor_popup' },
       { $set: { value } },
@@ -450,6 +457,29 @@ app.get('/api/certificate/appreciation/:id', async (req, res) => {
     const cert = await db.collection('certificates').findOne({ certificateId });
     if (!cert) return res.status(404).json({ error: 'Certificate not found' });
     res.json(cert);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint update user profile (tanpa /profile, standar REST)
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    await client.connect();
+    const db = client.db('creator_web');
+    const { id } = req.params;
+    if (!id || typeof id !== 'string' || id.length !== 24 || !/^[a-fA-F0-9]{24}$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid user id format' });
+    }
+    const updateFields = { ...req.body };
+    delete updateFields._id;
+    const result = await db.collection('users').findOneAndUpdate(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateFields },
+      { returnDocument: 'after' }
+    );
+    if (!result.value) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: result.value });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

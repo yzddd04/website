@@ -236,18 +236,29 @@ export async function getMemberStats(userId: string): Promise<MemberStats> {
 }
 
 export async function updateUserProfile(userId: string, profileData: Partial<User>): Promise<{user: User}> {
-  const res = await fetchWithFallback(`/api/users/profile/${userId}`, {
+  const res = await fetchWithFallback(`/api/users/${userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(profileData),
   });
 
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || 'Failed to update profile');
+    let errorMsg = 'Failed to update profile';
+    try {
+      const errorData = await res.json();
+      errorMsg = errorData.message || errorMsg;
+    } catch {
+      // response bukan JSON (mungkin HTML error page)
+      errorMsg = 'Failed to update profile (invalid response from server)';
+    }
+    throw new Error(errorMsg);
   }
 
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new Error('Failed to parse server response after update.');
+  }
 }
 
 export async function getUser(userId: string): Promise<User> {
@@ -284,6 +295,7 @@ export interface SponsorPopupSetting {
   contentType: 'text' | 'image' | 'both';
   textContent: string;
   imageUrl: string;
+  link?: string;
 }
 
 export async function getSponsorPopupSetting(): Promise<SponsorPopupSetting> {

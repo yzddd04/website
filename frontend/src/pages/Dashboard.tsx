@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { TrendingUp, Users, Download, ExternalLink, Shield } from 'lucide-react';
 import { getUser, getFollowersGrowth, FollowersGrowth } from '../api';
+import { IoPersonCircleSharp } from "react-icons/io5";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -70,12 +71,16 @@ const Dashboard: React.FC = () => {
   const badgeDetails = getBadgeByFollowers(totalFollowers);
   const certificateUrl = user.certificateId ? `/certificate/${user.certificateId}` : '';
 
+  // Ambil username dari user.socialLinks
+  const tiktokUsername = user.socialLinks?.tiktok || '';
+  const instagramUsername = user.socialLinks?.instagram || '';
+
   const stats = [
     {
       icon: <TrendingUp className="w-6 h-6 text-blue-600" />,
       label: 'Total Followers',
       value: followers.loading ? (
-        <span className="inline-block w-12 h-6 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 rounded animate-pulse"></span>
+        <span className="inline-block w-12 h-6 bg-purple-200 rounded animate-pulse"></span>
       ) : (
         totalFollowers.toLocaleString()
       ),
@@ -89,7 +94,7 @@ const Dashboard: React.FC = () => {
       icon: <Users className="w-6 h-6 text-green-600" />,
       label: 'TikTok Followers',
       value: followers.loading ? (
-        <span className="inline-block w-12 h-6 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></span>
+        <span className="inline-block w-12 h-6 bg-gray-200 rounded animate-pulse"></span>
       ) : (
         followers.tiktok.toLocaleString()
       ),
@@ -103,7 +108,7 @@ const Dashboard: React.FC = () => {
       icon: <Users className="w-6 h-6 text-pink-600" />,
       label: 'Instagram Followers',
       value: followers.loading ? (
-        <span className="inline-block w-12 h-6 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></span>
+        <span className="inline-block w-12 h-6 bg-gray-200 rounded animate-pulse"></span>
       ) : (
         followers.instagram.toLocaleString()
       ),
@@ -148,11 +153,15 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="mb-12">
         <div className="flex items-center mb-6 space-x-4">
-          <img
-            src={user.profileImage || `https://images.pexels.com/photos/1300402/pexels-photo-1300402.jpeg?auto=compress&cs=tinysrgb&w=200&h=200&dpr=2`}
-            alt={user.name}
-            className="object-cover w-16 h-16 rounded-full"
-          />
+          {user.profileImage ? (
+            <img
+              src={user.profileImage || ''}
+              alt={user.name || 'Profile'}
+              className="object-cover w-16 h-16 rounded-full"
+            />
+          ) : (
+            <IoPersonCircleSharp className="w-16 h-16 text-gray-300" />
+          )}
           <div>
             <div className="flex items-center mb-1 space-x-2">
               <h1 className="text-3xl font-bold text-gray-900">
@@ -172,19 +181,19 @@ const Dashboard: React.FC = () => {
         {/* Badge Display */}
         <div className="p-6 bg-white rounded-xl border border-gray-100 shadow-lg">
           <div className="flex items-center space-x-4">
-            <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${badgeDetails.color} flex items-center justify-center text-2xl`}>
+            <div className={`w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center text-2xl`}>
               {badgeDetails.icon}
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-bold text-gray-900">{badgeDetails.name}</h3>
               <p className="text-gray-600">Total {followers.loading ? (
-                <span className="inline-block w-12 h-6 bg-gradient-to-r from-purple-200 via-purple-100 to-purple-200 rounded animate-pulse"></span>
+                <span className="inline-block w-12 h-6 bg-purple-200 rounded animate-pulse"></span>
               ) : (
                 totalFollowers.toLocaleString()
               )} followers</p>
               {/* Perkembangan followers */}
               {!growthData ? (
-                <span className="inline-block mt-1 w-32 h-5 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded animate-pulse"></span>
+                <span className="inline-block mt-1 w-32 h-5 bg-gray-200 rounded animate-pulse"></span>
               ) : (
                 <>
                   <span className={`block mt-1 text-sm font-medium ${growthData.growthMinute === null || growthData.growthMinute === undefined ? 'text-gray-400' : growthData.growthMinute > 0 ? 'text-green-600' : growthData.growthMinute < 0 ? 'text-red-600' : 'text-gray-400'}`}>
@@ -233,40 +242,57 @@ const Dashboard: React.FC = () => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="relative p-6 bg-white rounded-xl border border-gray-100 shadow-lg">
-            <div className="flex justify-between items-center mb-2">
-              {stat.icon}
-              {stat.change}
-            </div>
-            <h3 className="mb-1 text-2xl font-bold text-gray-900">{stat.value}</h3>
-            <p className="text-sm text-gray-600">{stat.label}</p>
-          </div>
-        ))}
+        {/* TikTok */}
+        <div className="relative p-6 bg-white rounded-xl border border-gray-100 shadow-lg">
+          <a href={tiktokUsername ? `https://tiktok.com/@${tiktokUsername}` : ''} target="_blank" rel="noopener noreferrer" className="flex justify-between items-center mb-2 group">
+            <Users className="w-6 h-6 text-green-600 group-hover:text-green-800 transition" />
+            {stats[1].change}
+          </a>
+          <a href={tiktokUsername ? `https://tiktok.com/@${tiktokUsername}` : ''} target="_blank" rel="noopener noreferrer" className="block text-lg font-semibold text-gray-800 hover:text-green-700 transition">
+            TikTok
+          </a>
+          <a href={tiktokUsername ? `https://tiktok.com/@${tiktokUsername}` : ''} target="_blank" rel="noopener noreferrer" className="block text-2xl font-bold text-gray-900 hover:text-green-700 transition">
+            {followers.tiktok.toLocaleString()}
+          </a>
+        </div>
+        {/* Instagram */}
+        <div className="relative p-6 bg-white rounded-xl border border-gray-100 shadow-lg">
+          <a href={instagramUsername ? `https://instagram.com/${instagramUsername}` : ''} target="_blank" rel="noopener noreferrer" className="flex justify-between items-center mb-2 group">
+            <Users className="w-6 h-6 text-pink-600 group-hover:text-pink-800 transition" />
+            {stats[2].change}
+          </a>
+          <a href={instagramUsername ? `https://instagram.com/${instagramUsername}` : ''} target="_blank" rel="noopener noreferrer" className="block text-lg font-semibold text-gray-800 hover:text-pink-700 transition">
+            Instagram
+          </a>
+          <a href={instagramUsername ? `https://instagram.com/${instagramUsername}` : ''} target="_blank" rel="noopener noreferrer" className="block text-2xl font-bold text-gray-900 hover:text-pink-700 transition">
+            {followers.instagram.toLocaleString()}
+          </a>
+        </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-12">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5">
-          {quickActions.map((action, index) => (
-            <Link
-              key={index}
-              to={action.href}
-              className="p-6 bg-white rounded-xl border border-gray-100 shadow-lg transition-shadow hover:shadow-xl group"
-            >
-              <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center text-white mb-4 group-hover:scale-110 transition-transform`}>
+      <div className="grid grid-cols-1 gap-6 mb-12 md:grid-cols-2 lg:grid-cols-4">
+        {quickActions.map((action, index) => (
+          <div key={index} className="relative p-6 bg-white rounded-xl border border-gray-100 shadow-lg">
+            <div className="flex items-center space-x-4">
+              <div className={`w-16 h-16 rounded-full ${action.color} flex items-center justify-center text-2xl`}>
                 {action.icon}
               </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                {action.title}
-              </h3>
-              <p className="text-sm text-gray-600">
-                {action.description}
-              </p>
-            </Link>
-          ))}
-        </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-gray-900">{action.title}</h3>
+                <p className="text-gray-600">{action.description}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <Link
+                to={action.href}
+                className="inline-flex items-center space-x-2 font-medium text-purple-600 hover:text-purple-700"
+              >
+                <span>View</span>
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

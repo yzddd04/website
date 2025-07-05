@@ -2,12 +2,40 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Users, LogIn, UserPlus, Menu, X, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import UsernameRequiredModal from './UsernameRequiredModal';
+import { updateUserProfile } from '../api';
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth();
+type LayoutProps = { children: React.ReactNode; noPaddingTop?: boolean };
+
+const Layout: React.FC<LayoutProps> = ({ children, noPaddingTop }) => {
+  const { user, logout, setUser } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [showUsernameModal, setShowUsernameModal] = React.useState(false);
+
+  React.useEffect(() => {
+    if (user && (!user.socialLinks || (!user.socialLinks.tiktok && !user.socialLinks.instagram))) {
+      setShowUsernameModal(true);
+    } else {
+      setShowUsernameModal(false);
+    }
+  }, [user]);
+
+  const handleSaveUsername = async (tiktok: string, instagram: string) => {
+    if (!user || !user._id) return;
+    const socialLinks = { tiktok, instagram };
+    try {
+      await updateUserProfile(user._id, { socialLinks });
+      if (setUser) {
+        setUser({ ...user, socialLinks });
+        localStorage.setItem('user', JSON.stringify({ ...user, socialLinks }));
+      }
+      setShowUsernameModal(false);
+    } catch {
+      alert('Gagal menyimpan username. Coba lagi.');
+    }
+  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -23,14 +51,21 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <nav className="bg-white/80 backdrop-blur-sm shadow-lg sticky top-0 z-50">
+    <div className={`min-h-screen flex flex-col ${noPaddingTop ? '' : 'pt-16'}`}>
+      <UsernameRequiredModal
+        isOpen={showUsernameModal}
+        onClose={() => {}}
+        onSave={handleSaveUsername}
+        initialTiktok={user?.socialLinks?.tiktok || ''}
+        initialInstagram={user?.socialLinks?.instagram || ''}
+      />
+      <nav className="bg-white/80 backdrop-blur-sm shadow-lg fixed top-0 left-0 w-full z-[60]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link to="/" className="flex items-center space-x-2">
                 <Users className="h-8 w-8 text-purple-600" />
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                <span className="text-xl font-bold text-purple-600">
                   Creators Community
                 </span>
               </Link>
@@ -193,7 +228,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <div className="md:col-span-2 flex flex-col justify-between">
               <div className="flex items-center space-x-2 mb-3">
                 <Users className="h-8 w-8 text-purple-400" />
-                <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Creators Community</span>
+                <span className="text-2xl font-bold text-purple-400">Creators Community</span>
               </div>
               <p className="text-gray-400 mb-2 leading-relaxed">
                 Komunitas creators mahasiswa ITS untuk saling support dan berkembang bersama.

@@ -4,6 +4,7 @@ import { Download, ExternalLink, CheckCircle } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { QRCodeCanvas } from 'qrcode.react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface CertificateData {
   id: string;
@@ -15,6 +16,7 @@ interface CertificateData {
   verificationUrl: string;
   instagramFollowers?: number;
   tiktokFollowers?: number;
+  certificateId?: string;
 }
 
 // TypeScript typing untuk CertificateText agar linter tidak error
@@ -39,11 +41,28 @@ const Certificate: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<'live' | 'appreciation'>('live');
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
+  const [userId, setUserId] = useState<string>('');
+  const [userList, setUserList] = useState<{_id: string, name: string}[]>([]);
 
-  // Simulasi userId, ganti dengan userId login sebenarnya jika ada auth
-  const userId = 'USER_ID_SAMPLE';
+  // Fetch daftar user jika tidak login
+  useEffect(() => {
+    if (!user) {
+      fetch('/api/users')
+        .then(res => res.json())
+        .then((data: { _id: string, name: string }[]) => setUserList(data.map((u) => ({ _id: u._id, name: u.name }))))
+        .catch(() => setUserList([]));
+    }
+  }, [user]);
 
   useEffect(() => {
+    if (user && user._id) {
+      setUserId(user._id as string);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!userId && !user) return;
     if (mode === 'live') {
       if (credential) {
         setLoading(true);
@@ -56,12 +75,11 @@ const Certificate: React.FC = () => {
           .catch(err => { setError(err.message); setLoading(false); });
       }
     } else if (mode === 'appreciation') {
-      // Buat snapshot baru, lalu fetch datanya
       setLoading(true);
       fetch('/api/certificate/appreciation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId: userId || (user && user._id) })
       })
         .then(res => res.json())
         .then(result => {
@@ -72,7 +90,7 @@ const Certificate: React.FC = () => {
         .then(data => { setCertificateData(data); setLoading(false); })
         .catch(err => { setError(err.message); setLoading(false); });
     }
-  }, [credential, mode]);
+  }, [credential, mode, userId, user]);
 
   const getBadgeDetails = (badge: string) => {
     switch (badge) {
@@ -97,6 +115,7 @@ const Certificate: React.FC = () => {
   }
 
   const badgeDetails = getBadgeDetails(certificateData.badge);
+  const certId = certificateData?.certificateId || certificateData?.id;
 
   const downloadPDF = async () => {
     if (certificateRef.current) {
@@ -200,6 +219,15 @@ const Certificate: React.FC = () => {
           <label>
             <input type="radio" name="certmode" value="appreciation" checked={mode === 'appreciation'} onChange={() => setMode('appreciation')} /> Certificate of Appreciation
           </label>
+          {/* Jika tidak login, tampilkan dropdown userId untuk testing */}
+          {!user && mode === 'appreciation' && (
+            <select value={userId} onChange={e => setUserId(e.target.value || '')} className="ml-4 border rounded px-2 py-1">
+              <option value="">Pilih User</option>
+              {userList.map(u => (
+                <option key={u._id} value={u._id}>{u.name} ({u._id})</option>
+              ))}
+            </select>
+          )}
         </div>
         {/* Loading/Error */}
         {loading && <div className="text-center text-gray-500">Loading certificate...</div>}
@@ -304,7 +332,7 @@ const Certificate: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium text-gray-700">Certificate ID:</span>
-              <p className="text-gray-600 font-mono">{certificateData.id}</p>
+              <p className="text-gray-600 font-mono">{certId}</p>
             </div>
             <div>
               <span className="font-medium text-gray-700">Issue Date:</span>

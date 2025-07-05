@@ -22,7 +22,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     getSponsorPopupSetting()
       .then(setPopupSetting)
-      .catch(() => setPopupSetting({ enabled: true, contentType: 'text', textContent: '', imageUrl: '' }))
+      .catch(() => setPopupSetting({ enabled: true, contentType: 'text', textContent: '', imageUrl: '', link: '' }))
       .finally(() => setLoadingPopup(false));
 
     getAllUsers()
@@ -34,7 +34,7 @@ const AdminDashboard: React.FC = () => {
       .finally(() => setLoadingUsers(false));
   }, []);
 
-  const handlePopupChange = (field: keyof SponsorPopupSetting, value: any) => {
+  const handlePopupChange = (field: keyof SponsorPopupSetting, value: string | boolean) => {
     if (!popupSetting) return;
     setPopupSetting({ ...popupSetting, [field]: value });
   };
@@ -343,6 +343,17 @@ const AdminDashboard: React.FC = () => {
                 />
               </div>
             )}
+            {/* Input untuk link info lebih lanjut */}
+            <div>
+              <label className="font-medium block mb-1">Link Info Lebih Lanjut (opsional):</label>
+              <input
+                type="text"
+                value={popupSetting.link || ''}
+                onChange={e => handlePopupChange('link', e.target.value)}
+                className="border rounded px-2 py-1 w-full"
+                placeholder="https://contoh.link/info"
+              />
+            </div>
             {popupError && <div className="text-red-600 text-sm">{popupError}</div>}
             <button
               type="submit"

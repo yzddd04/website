@@ -40,6 +40,16 @@ const SponsorModal: React.FC<SponsorModalProps> = ({ isOpen, onClose, setting })
               className="rounded shadow"
             />
           )}
+          {setting.link && (
+            <a
+              href={setting.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+            >
+              Klik untuk info lebih lanjut
+            </a>
+          )}
         </div>
       </div>
     </div>
