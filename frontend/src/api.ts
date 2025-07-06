@@ -262,8 +262,14 @@ export async function updateUserProfile(userId: string, profileData: Partial<Use
 }
 
 export async function getUser(userId: string): Promise<User> {
-  const res = await fetchWithFallback(`/api/users/id/${userId}`);
-  if (!res.ok) throw new Error('Failed to fetch user');
+  const res = await fetchWithFallback(`/api/users/${userId}`);
+  if (!res.ok) {
+    const data = await res.json();
+    if (res.status === 404) {
+      throw new Error(data.error || 'User tidak ditemukan');
+    }
+    throw new Error(data.error || 'Gagal mengambil data user');
+  }
   return res.json();
 }
 

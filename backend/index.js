@@ -8,10 +8,13 @@ import crypto from 'crypto';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5001;
 
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: true, // allow all origins for testing
+  credentials: true
+}));
 
 // Koneksi ke MongoDB lokal
 mongoose.connect(process.env.MONGODB_URI);
@@ -94,7 +97,7 @@ app.get('/api/users/:username', async (req, res) => {
   }
 });
 
-app.get('/api/users/id/:id', async (req, res) => {
+app.get('/api/users/:id', async (req, res) => {
   try {
     await client.connect();
     const db = client.db('creator_web');
@@ -102,9 +105,13 @@ app.get('/api/users/id/:id', async (req, res) => {
     if (!id || typeof id !== 'string' || id.length !== 24 || !/^[a-fA-F0-9]{24}$/.test(id)) {
       return res.status(400).json({ error: 'Invalid user id format' });
     }
-    const user = await db.collection('users').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    let user;
+    try {
+      user = await db.collection('users').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid ObjectId' });
+    }
     if (!user) return res.status(404).json({ error: 'User not found' });
-    ensureCertificateId(user, db);
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -486,8 +493,9 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 const tryListen = (port) => {
-  app.listen(port, () => {
-    console.log(`Backend listening on http://localhost:${port}`);
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Backend listening on http://0.0.0.0:${port}`);
+    console.log(`External access: http://157.20.32.130:${port}`);
   }).on('error', err => {
     if (err.code === 'EADDRINUSE') {
       if (port === 5000) {
