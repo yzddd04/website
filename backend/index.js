@@ -16,7 +16,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Koneksi ke MongoDB lokal
+// Koneksi ke MongoDB Atlas (cloud)
 mongoose.connect(process.env.MONGODB_URI);
 
 const userSchema = new mongoose.Schema({
@@ -40,7 +40,8 @@ const userSchema = new mongoose.Schema({
 });
 const User = mongoose.model('User', userSchema);
 
-const uri = 'mongodb://localhost:27017';
+// Ganti uri lokal dengan URI dari .env (Atlas)
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 app.get('/api/hello', (req, res) => {
@@ -215,7 +216,7 @@ app.get('/api/members/stats', async (req, res) => {
 app.get('/api/users/:username/followers-growth', async (req, res) => {
   try {
     await client.connect();
-    const db = client.db('server_creator');
+    const db = client.db('creator_web');
     // Ambil dua data terbaru (untuk growth per menit)
     const lastTwo = await db.collection('stats').find({'data.username': req.params.username}).sort({ timestamp: -1 }).limit(2).toArray();
     const latest = lastTwo[0] ? [lastTwo[0]] : [];

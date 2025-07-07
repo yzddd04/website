@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:public": "curl -s ifconfig.me && echo ' <= IP Publik Anda' && vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
