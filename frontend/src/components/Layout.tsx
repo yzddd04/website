@@ -41,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ children, noPaddingTop }) => {
     { name: 'Home', href: '/' },
     { name: 'Anggota', href: '/members' },
     { name: 'Benefits', href: '/benefits' },
+    { name: 'Courses', href: '/courses' },
   ];
 
   const isActive = (href: string) => location.pathname === href;
@@ -239,6 +240,7 @@ const Layout: React.FC<LayoutProps> = ({ children, noPaddingTop }) => {
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
                 <li><Link to="/benefits" className="text-gray-400 hover:text-white transition-colors">Benefits</Link></li>
+                <li><Link to="/courses" className="text-gray-400 hover:text-white transition-colors">Courses</Link></li>
                 <li><Link to="/members" className="text-gray-400 hover:text-white transition-colors">Anggota</Link></li>
               </ul>
             </div>

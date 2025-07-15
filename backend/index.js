@@ -5,6 +5,9 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import { MongoClient } from 'mongodb';
 import crypto from 'crypto';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 const app = express();
@@ -494,21 +497,53 @@ app.put('/api/users/:id', async (req, res) => {
 });
 
 const tryListen = (port) => {
-  app.listen(port, '0.0.0.0', () => {
-    console.log(`Backend listening on http://0.0.0.0:${port}`);
-    console.log(`External access: http://157.20.32.130:${port}`);
-  }).on('error', err => {
-    if (err.code === 'EADDRINUSE') {
-      if (port === 5000) {
-        console.warn('Port 5000 in use, trying 5001...');
-        tryListen(5001);
+  // SSL certificate paths
+  const sslDir = '/home/ubuntu/website/ssl';
+  const certPath = path.join(sslDir, 'cert.pem');
+  const keyPath = path.join(sslDir, 'key.pem');
+
+  // Check if SSL certificates exist
+  if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+    const options = {
+      cert: fs.readFileSync(certPath),
+      key: fs.readFileSync(keyPath)
+    };
+
+    // Create HTTPS server
+    https.createServer(options, app).listen(port, '0.0.0.0', () => {
+      console.log(`Backend listening on https://0.0.0.0:${port}`);
+      console.log(`External access: https://157.20.32.130:${port}`);
+    }).on('error', err => {
+      if (err.code === 'EADDRINUSE') {
+        if (port === 5000) {
+          console.warn('Port 5000 in use, trying 5001...');
+          tryListen(5001);
+        } else {
+          console.error('All ports in use. Backend failed to start.');
+        }
       } else {
-        console.error('All ports in use. Backend failed to start.');
+        throw err;
       }
-    } else {
-      throw err;
-    }
-  });
+    });
+  } else {
+    // Fallback to HTTP if SSL certificates don't exist
+    console.warn('SSL certificates not found, starting HTTP server...');
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Backend listening on http://0.0.0.0:${port}`);
+      console.log(`External access: http://157.20.32.130:${port}`);
+    }).on('error', err => {
+      if (err.code === 'EADDRINUSE') {
+        if (port === 5000) {
+          console.warn('Port 5000 in use, trying 5001...');
+          tryListen(5001);
+        } else {
+          console.error('All ports in use. Backend failed to start.');
+        }
+      } else {
+        throw err;
+      }
+    });
+  }
 };
 
 tryListen(PORT);

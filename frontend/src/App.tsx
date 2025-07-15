@@ -12,6 +12,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Certificate from './pages/Certificate';
 import Profile from './pages/Profile';
 import Analytics from './pages/Analytics';
+import Courses from './pages/Courses';
 
 function setFaviconByTheme() {
   const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -68,6 +69,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/members" element={<Members />} />
             <Route path="/benefits" element={<Benefits />} />
+            <Route path="/courses" element={<Courses />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
